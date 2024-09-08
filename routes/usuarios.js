@@ -1,7 +1,7 @@
 const { Router }=require('express');
 const { check }=require('express-validator');
 const { validarCampos } = require('../middlewares/validar-campos');
-const { crearEmpresa } = require('../controllers/usuario');
+const { crearEmpresa, login } = require('../controllers/usuario');
 
 const router=Router();
 
@@ -21,5 +21,11 @@ router.post('/crearEmp', [
     check('domicilio','campo obligatorio').not().isEmpty(),
     validarCampos
 ],crearEmpresa);
+
+router.post('/login', [
+    check('mail').isEmail(),
+    check('pass','el campo es obligatorio').not().isEmpty(),
+    validarCampos
+],login);
 
 module.exports=router;
