@@ -29,6 +29,7 @@ const crearEmpresa= async(req,res = response) =>{
         const salt=bcrypt.genSaltSync();
         empresa.pass=bcrypt.hashSync(pass,salt);
         empresa.habilitado=false;
+        empresa.validado=false;
 
         let date_time=new Date();
         let date=("0" + date_time.getDate()).slice(-2);
@@ -44,7 +45,7 @@ const crearEmpresa= async(req,res = response) =>{
 
         res.json({
             ok:true,
-            // empresa,
+            mail,
             token
         });
         
@@ -57,4 +58,60 @@ const crearEmpresa= async(req,res = response) =>{
     }
 };
 
-module.exports={crearEmpresa}
+const login=async(req,res=response)=>{
+    const { mail, pass }= req.body;
+
+    try {        
+        let flag1, flag2= false;
+        const usuarioDB= await Usuario.findOne({mail});    
+        if(!usuarioDB){
+            flag1=true
+        }
+        const usuarioDB2= await Empresa.findOne({mail});
+        if(!usuarioDB2){
+            flag2=true
+        }
+        if(flag1 && flag2){
+            return res.status(404).json({
+                ok:false,
+                msg:'No se encontro un usuario con ese e-mail'
+            })
+        }
+
+        let cuentaEncontrada;
+        if(!flag1) cuentaEncontrada=usuarioDB;
+        if(!flag2) cuentaEncontrada=usuarioDB2;
+
+        const validPassword=bcrypt.compareSync(pass,cuentaEncontrada.pass);
+        if(!validPassword){
+            return res.status(400).json({
+                ok:false,
+                msg:'Contraseña incorrecta'
+            })
+        }
+
+        if(!cuentaEncontrada.validado || !cuentaEncontrada.habilitado){
+            res.json({
+                ok:false,
+                validado: cuentaEncontrada.validado,
+                habilitado: cuentaEncontrada.habilitado,
+                mail: cuentaEncontrada.mail
+            })
+        }else{
+            const token= await generarJWT(cuentaEncontrada.id);
+            res.json({
+                ok:true,
+                token,
+                user: cuentaEncontrada.user
+            })
+        }
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({
+            ok:false,
+            msg:'error login'
+        });
+    }
+}
+
+module.exports={crearEmpresa, login}
