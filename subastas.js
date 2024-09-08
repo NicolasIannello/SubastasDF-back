@@ -11,6 +11,7 @@ app.use( express.json() );
 
 dbConnection();
 
+app.use('/api/usuarios', require('./routes/usuarios'));
 
 app.listen( process.env.PORT, () =>{
     console.log('Iniciando');
