@@ -3,7 +3,7 @@ const { Schema, model } = require('mongoose');
 const EmpresaSchema = Schema({
     nombre_comercial: { type: String, required: true },
     razon_social: { type: String, required: true },
-    cuilcuit: { type: String, required: true },
+    cuil_cuit: { type: String, required: true },
     persona_responsable: { type: String, required: true },
     telefono: { type: String, required: true },
     actividad: { type: String, required: true },
@@ -15,6 +15,8 @@ const EmpresaSchema = Schema({
     ciudad: { type: String, required: true },
     postal: { type: String, required: true },
     domicilio: { type: String, required: true },
+    habilitado: { type: Boolean, required: true },
+    ultima_conexion: { type: String, required: true },
 });
 
 EmpresaSchema.method('toJSON', function() {
