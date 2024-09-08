@@ -17,6 +17,7 @@ const EmpresaSchema = Schema({
     domicilio: { type: String, required: true },
     habilitado: { type: Boolean, required: true },
     ultima_conexion: { type: String, required: true },
+    validado: { type: Boolean, required: true },
 });
 
 EmpresaSchema.method('toJSON', function() {
