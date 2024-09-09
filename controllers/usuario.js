@@ -65,6 +65,58 @@ const crearEmpresa= async(req,res = response) =>{
     }
 };
 
+const crearUsuario= async(req,res = response) =>{
+    const {mail,pass}=req.body;
+
+    try {
+        const flagcc=checkCuilCuit(req.body.cuil_cuit);
+        if(!flagcc){
+            return res.status(400).json({
+                ok:false,
+                msg:'Cuil/Cuit invalido'
+            });
+        }
+        const existeEmail= await Usuario.findOne({mail});
+        if(existeEmail){
+            return res.status(400).json({
+                ok:false,
+                msg:'Ya existe una cuenta con ese e-mail'
+            });
+        }
+        const existeEmail2= await Empresa.findOne({mail});
+        if(existeEmail2){
+            return res.status(400).json({
+                ok:false,
+                msg:'Ya existe una cuenta con ese e-mail'
+            });
+        }
+
+        const usuario= new Usuario(req.body);
+
+        const salt=bcrypt.genSaltSync();
+        usuario.pass=bcrypt.hashSync(pass,salt);
+        usuario.habilitado=false;
+        usuario.validado=false; 
+        usuario.ultima_conexion=timeNow();
+        
+        await usuario.save();
+        const token= await generarJWT(usuario.uid);
+
+        res.json({
+            ok:true,
+            mail,
+            token
+        });
+        
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({
+            ok:false,
+            msg:'error'
+        });
+    }
+};
+
 const login=async(req,res=response)=>{
     const { mail, pass }= req.body;
 
@@ -105,13 +157,13 @@ const login=async(req,res=response)=>{
                 habilitado: cuentaEncontrada.habilitado,
                 mail: cuentaEncontrada.mail,
                 token,
-                user: cuentaEncontrada.nombre_comercial ? cuentaEncontrada.nombre_comercial : nombre_apellido
+                user: cuentaEncontrada.nombre_comercial ? cuentaEncontrada.nombre_comercial : cuentaEncontrada.nombre_apellido
             })
         }else{
             res.json({
                 ok:true,
                 token,
-                user: cuentaEncontrada.user
+                user: cuentaEncontrada.nombre_comercial ? cuentaEncontrada.nombre_comercial : cuentaEncontrada.nombre_apellido
             })
         }
     } catch (error) {
@@ -129,7 +181,7 @@ const renewToken= async(req,res=response)=>{
     const empDB= await Empresa.findById(_id)
     const userDB= await Usuario.findById(_id)
 
-    if(!empDB && userDB){
+    if(!empDB && !userDB){
         res.json({
             ok:false
         })
@@ -176,4 +228,16 @@ const checkCuilCuit=(cc)=>{
     return rv;
 }
 
-module.exports={crearEmpresa, login, renewToken}
+const timeNow=()=>{
+    let date_time=new Date();
+    let date=("0" + date_time.getDate()).slice(-2);
+    let month=("0" + (date_time.getMonth() + 1)).slice(-2);
+    let year=date_time.getFullYear();
+    let hours=date_time.getHours();
+    let minutes=date_time.getMinutes();
+    let fecha=date+"-"+month+"-"+year+" "+hours+":"+minutes;
+
+    return fecha;
+}
+
+module.exports={crearEmpresa, crearUsuario, login, renewToken}
