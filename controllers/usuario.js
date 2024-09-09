@@ -123,6 +123,37 @@ const login=async(req,res=response)=>{
     }
 }
 
+const renewToken= async(req,res=response)=>{    
+    const _id=req.uid;
+    const token= await generarJWT(_id);
+    const empDB= await Empresa.findById(_id)
+    const userDB= await Usuario.findById(_id)
+
+    if(!empDB && userDB){
+        res.json({
+            ok:false
+        })
+    }else{
+        let nombre, email;
+        if(empDB){
+            let {nombre_comercial, mail}=empDB
+            nombre=nombre_comercial;
+            email=mail;
+        }
+        if(userDB){
+            let {nombre_apellido, mail}=userDB
+            nombre=nombre_apellido;
+            email=mail;
+        }
+        res.json({
+            ok:true,
+            token,
+            nombre,
+            email
+        })
+    }
+}
+
 const checkCuilCuit=(cc)=>{		
     var rv = false;
     var resultado = 0;
@@ -145,4 +176,4 @@ const checkCuilCuit=(cc)=>{
     return rv;
 }
 
-module.exports={crearEmpresa, login}
+module.exports={crearEmpresa, login, renewToken}
