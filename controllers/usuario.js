@@ -4,6 +4,7 @@ const Usuario = require('../models/usuario');
 const bcrypt=require('bcryptjs');
 const Empresa = require('../models/empresa');
 const Viejos = require('../models/Viejos');
+const nodemailer = require("nodemailer");
 
 const crearEmpresa= async(req,res = response) =>{
     const {mail,pass}=req.body;
@@ -48,7 +49,8 @@ const crearEmpresa= async(req,res = response) =>{
         empresa.ultima_conexion=fecha
         
         await empresa.save();
-        const token= await generarJWT(empresa.uid);
+        const token= await generarJWT(empresa.uid,1);
+        notificar(empresa.mail,empresa.uid)
 
         res.json({
             ok:true,
@@ -100,7 +102,8 @@ const crearUsuario= async(req,res = response) =>{
         usuario.ultima_conexion=timeNow();
         
         await usuario.save();
-        const token= await generarJWT(usuario.uid);
+        const token= await generarJWT(usuario.uid,1);
+        notificar(usuario.mail,usuario.uid)
 
         res.json({
             ok:true,
@@ -149,8 +152,11 @@ const login=async(req,res=response)=>{
             })
         }
 
-        const token= await generarJWT(cuentaEncontrada.id);
+        const token= await generarJWT(cuentaEncontrada.id,1);
         if(!cuentaEncontrada.validado || !cuentaEncontrada.habilitado){
+            if(!cuentaEncontrada.validado){
+                notificar(cuentaEncontrada.mail,cuentaEncontrada.id)
+            }
             res.json({
                 ok:false,
                 validado: cuentaEncontrada.validado,
@@ -177,7 +183,7 @@ const login=async(req,res=response)=>{
 
 const renewToken= async(req,res=response)=>{    
     const _id=req.uid;
-    const token= await generarJWT(_id);
+    const token= await generarJWT(_id,1);
     const empDB= await Empresa.findById(_id)
     const userDB= await Usuario.findById(_id)
 
@@ -240,4 +246,58 @@ const timeNow=()=>{
     return fecha;
 }
 
-module.exports={crearEmpresa, crearUsuario, login, renewToken}
+const notificar= async(mail,id)=>{    
+    const transporter = nodemailer.createTransport({
+        maxConnections: 1,
+        pool: true,
+        service: process.env.MSERVICE,
+        auth: {
+            user: 'gruppoDF.subastas@outlook.com',
+            pass: process.env.MPASS
+        }
+    });
+    let token=await generarJWT(id,2)    
+
+    await transporter.sendMail({
+        from: '"Gruppo DF Subastas" <gruppoDF.subastas@outlook.com>',
+        to: mail,
+        subject: "Verificacion de cuenta",
+        text: "Para terminar de configurar su cuenta por favor verifique su email."+process.env.MAIL+"/verificar/"+token,
+        html: 'Para terminar de configurar su cuenta por favor verifique su email.<br>'+process.env.MAIL+'/verificar/'+token,
+    }, function(error, info){
+        if (error) {
+            console.log(error);
+            return false;
+        }
+    });
+    
+    return true;
+};
+
+const validarCuenta= async(req,res=response)=>{    
+    const _id=req.uid;
+    const empDB= await Empresa.findById(_id)
+    const userDB= await Usuario.findById(_id)
+    
+    if(!empDB && !userDB){
+        res.json({
+            ok:false
+        })
+    }else{
+        if(empDB){
+            const {validado, ...campos}=empDB;
+            campos._doc.validado=true;
+            await Empresa.findByIdAndUpdate(_id, campos,{new:true});   
+        }
+        if(userDB){
+            const {validado, ...campos}=userDB;
+            campos._doc.validado=true;
+            await Usuario.findByIdAndUpdate(_id, campos,{new:true});   
+        }
+        res.json({
+            ok:true,
+        })
+    }
+}
+
+module.exports={crearEmpresa, crearUsuario, login, renewToken, validarCuenta}
