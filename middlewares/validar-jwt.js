@@ -21,7 +21,7 @@ const validarJWT=(req,res,next)=>{
                 secret=process.env.JWT_VALIDATE;
                 break;
             case 3:
-                secret='';
+                secret=process.env.JWT_SECRET;
                 break;
             default:
                 break;
@@ -30,6 +30,13 @@ const validarJWT=(req,res,next)=>{
 
         req.uid=uid;
         
+        if(tipo==3){
+            let flag= uid ? true:false;
+            return res.json({
+                ok: flag,
+            });
+        }
+
         next();
     } catch (error) {
         return res.status(401).json({
