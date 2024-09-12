@@ -50,7 +50,7 @@ const crearEmpresa= async(req,res = response) =>{
         
         await empresa.save();
         const token= await generarJWT(empresa.uid,1);
-        notificar(empresa.mail,empresa.uid)
+        notificar(empresa.mail,empresa.uid,2)
 
         res.json({
             ok:true,
@@ -103,7 +103,7 @@ const crearUsuario= async(req,res = response) =>{
         
         await usuario.save();
         const token= await generarJWT(usuario.uid,1);
-        notificar(usuario.mail,usuario.uid)
+        notificar(usuario.mail,usuario.uid,2)
 
         res.json({
             ok:true,
@@ -155,7 +155,7 @@ const login=async(req,res=response)=>{
         const token= await generarJWT(cuentaEncontrada.id,1);
         if(!cuentaEncontrada.validado || !cuentaEncontrada.habilitado){
             if(!cuentaEncontrada.validado){
-                notificar(cuentaEncontrada.mail,cuentaEncontrada.id)
+                notificar(cuentaEncontrada.mail,cuentaEncontrada.id,2)
             }
             res.json({
                 ok:false,
@@ -246,7 +246,7 @@ const timeNow=()=>{
     return fecha;
 }
 
-const notificar= async(mail,id)=>{    
+const notificar= async(mail,id,tipo)=>{    
     const transporter = nodemailer.createTransport({
         maxConnections: 1,
         pool: true,
@@ -256,14 +256,27 @@ const notificar= async(mail,id)=>{
             pass: process.env.MPASS
         }
     });
-    let token=await generarJWT(id,2)    
+    let token=await generarJWT(id,tipo)
+    let msg,msg2,title;
+    switch (tipo) {
+        case 2:
+            title="Verificacion de cuenta";
+            msg='Para terminar de configurar su cuenta siga el link.<br>'+process.env.LINK+'/verificar/'+token;
+            msg2="Para terminar de configurar su cuenta siga el link."+process.env.LINK+"/verificar/"+token;
+            break;
+        case 4:
+            title="Cambio de contraseña";
+            msg='Para realizar un cambio de contraseña siga el link.<br>'+process.env.LINK+'/cambio/'+token;
+            msg2="Para realizar un cambio de contraseña siga el link."+process.env.LINK+"/cambio/"+token;
+            break;
+    }
 
     await transporter.sendMail({
         from: '"Gruppo DF Subastas" <gruppoDF.subastas@outlook.com>',
         to: mail,
-        subject: "Verificacion de cuenta",
-        text: "Para terminar de configurar su cuenta por favor verifique su email."+process.env.MAIL+"/verificar/"+token,
-        html: 'Para terminar de configurar su cuenta por favor verifique su email.<br>'+process.env.MAIL+'/verificar/'+token,
+        subject: title,
+        text: msg2,
+        html: msg,
     }, function(error, info){
         if (error) {
             console.log(error);
@@ -300,4 +313,56 @@ const validarCuenta= async(req,res=response)=>{
     }
 }
 
-module.exports={crearEmpresa, crearUsuario, login, renewToken, validarCuenta}
+const sendCambio= async(req,res=response)=>{  
+    const {mail}=req.body;
+
+    let flag1,flag2=false;
+    const existeEmail= await Usuario.findOne({mail});
+    if(!existeEmail) flag1=true;
+    const existeEmail2= await Empresa.findOne({mail});
+    if(!existeEmail2) flag2=true;
+    if(flag1 && flag2){
+        return res.status(400).json({
+            ok:false,
+            msg:'No existe una cuenta con ese e-mail'
+        });
+    }
+
+    notificar(mail,mail,4)
+
+    return res.json({
+        ok:true,
+        msg:'Hemos enviado un mail para el cambio de contraseña'
+    });
+}
+
+const cambiarPass= async(req,res=response)=>{    
+    const mail=req.uid;
+    const passN=req.body.pass;    
+    const empDB= await Empresa.findOne({mail})
+    const userDB= await Usuario.findOne({mail})
+    
+    if(!empDB && !userDB){
+        res.json({
+            ok:false
+        })
+    }else{
+        if(empDB){
+            const {pass, ...campos}=empDB;
+            const salt=bcrypt.genSaltSync();
+            campos._doc.pass=bcrypt.hashSync(passN,salt);
+            await Empresa.findByIdAndUpdate(empDB._id, campos,{new:true});   
+        }
+        if(userDB){
+            const {validado, ...campos}=userDB;
+            const salt=bcrypt.genSaltSync();
+            campos._doc.pass=bcrypt.hashSync(passN,salt);
+            await Usuario.findByIdAndUpdate(userDB._id, campos,{new:true});   
+        }
+        res.json({
+            ok:true,
+        })
+    }
+}
+
+module.exports={crearEmpresa, crearUsuario, login, renewToken, validarCuenta, cambiarPass, sendCambio}
