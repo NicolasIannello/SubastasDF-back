@@ -14,8 +14,9 @@ const generarJWT=(uid,tipo)=>{
                 secret=process.env.JWT_VALIDATE;
                 expired='2h';
                 break;
-            case 3:
-                secret='';
+            case 4:
+                secret=process.env.JWT_PASS;
+                expired='2h';
                 break;
             default:
                 break;

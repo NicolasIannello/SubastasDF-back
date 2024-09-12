@@ -23,6 +23,9 @@ const validarJWT=(req,res,next)=>{
             case 3:
                 secret=process.env.JWT_SECRET;
                 break;
+            case 4:
+                secret=process.env.JWT_PASS;
+                break;
             default:
                 break;
         }
