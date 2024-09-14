@@ -20,4 +20,18 @@ const validarCampos= (req,res=response,next)=>{
     next();
 }
 
-module.exports={ validarCampos }
+const validarTipoUser= (req,res=response,next)=>{
+    let tipo=req.body.tipo
+
+    if(tipo=='emp'){        
+        if(!req.body.razon_social || !req.body.nombre_comercial || req.body.razon_social=="" || req.body.nombre_comercial==""){
+            return res.status(400).json({
+                ok:'error',
+            })
+        }
+    }
+
+    next();
+}
+
+module.exports={ validarCampos, validarTipoUser }
