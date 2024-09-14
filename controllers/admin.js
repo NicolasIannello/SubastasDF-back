@@ -3,8 +3,6 @@ const { generarJWT } = require('../helpers/jwt');
 const bcrypt=require('bcryptjs');
 const Admin = require('../models/admin');
 const Usuario = require('../models/usuario');
-const Empresa = require('../models/empresa');
-const Viejos = require('../models/Viejos');
 
 const login=async(req,res=response)=>{
     const { user, pass }= req.body;
@@ -61,8 +59,8 @@ const renewToken= async(req,res=response)=>{
 }
 
 const getUsers= async(req,res=response) =>{
-    const desde= req.query.desde || 0;
-    const limit= req.query.limit || 10;
+    const desde= parseInt(req.query.desde) || 0;
+    const limit= parseInt(req.query.limit) || 20;
     const adminDB= await Admin.findById(req.uid)
 
     if(!adminDB){
@@ -71,69 +69,35 @@ const getUsers= async(req,res=response) =>{
         })
     }
 
-    const [ users, totalU ]= await Promise.all([
-        //Usuario.find({},{pass:0,__v:0}).skip(desde).limit(limit),
+    const [ users, total ]= await Promise.all([
         Usuario.aggregate([
-            { "$project": {
-                "_id": 0,
-                "nombre": "$nombre_apellido",
-                "cuil_cuit":1,
-                "telefono":1,
-                "actividad":1,
-                "como_encontro":1,
-                "mail":1,
-                "pais":1,
-                "provincia":1,
-                "ciudad":1,
-                "postal":1,
-                "domicilio":1,
-                "habilitado":1,
-                "ultima_conexion":1,
-                "validado":1,
-            }},
-            { $addFields: { 'tipo': 'user' } }
-        ]).skip(desde).limit(limit),
+            { $project: {
+                __v: 0,
+                "__v": 0,
+                "pass": 0,
+            } },
+            { $lookup: {
+                from: "empresas",
+                localField: "mail",
+                foreignField: "mail",
+                as: "dato_empresa"
+            } },
+            {$unwind: { path: "$dato_empresa", preserveNullAndEmptyArrays: true }},
+            { $project: {
+                __v: 0,
+                "dato_empresa.__v": 0,
+                "dato_empresa.mail": 0,
+                "dato_empresa._id": 0,
+            } },
+            { $skip: desde },
+            { $limit: limit },
+        ]),
         Usuario.countDocuments()
-    ]);
-    const [ emps, totalE ]= await Promise.all([
-        // Empresa.find().skip(desde).limit(limit),
-        Empresa.aggregate([
-            { "$project": {
-                "_id": 0,
-                "nombre": "$nombre_comercial",
-                "razon_social": 1,
-                "cuil_cuit": 1,
-                "persona_responsable": 1,
-                "telefono": 1,
-                "actividad": 1,
-                "como_encontro": 1,
-                "mail": 1,
-                "pass": 1,
-                "pais": 1,
-                "provincia": 1,
-                "ciudad": 1,
-                "postal": 1,
-                "domicilio": 1,
-                "habilitado": 1,
-                "ultima_conexion": 1,
-                "validado": 1,
-            }},
-            { $addFields: { 'tipo': 'emp' } }
-        ]).skip(desde).limit(limit),
-        Empresa.countDocuments()
-    ]);
-    const [ viejos, totalV ]= await Promise.all([
-        // Viejos.find().skip(desde).limit(limit),
-        Viejos.aggregate([{ $addFields: { 'tipo': 'viejo' } }]).skip(desde).limit(limit),
-        Viejos.countDocuments()
-    ]);
-    let total=totalE+totalU+totalV;    
+    ]); 
     
     res.json({
         ok:true,
         users,
-        emps,
-        viejos,
         total
     });
 }
