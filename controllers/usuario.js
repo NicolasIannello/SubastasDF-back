@@ -1,77 +1,15 @@
 const { response }=require('express');
 const { generarJWT } = require('../helpers/jwt');
-const Usuario = require('../models/usuario');
 const bcrypt=require('bcryptjs');
-const Empresa = require('../models/empresa');
-const Viejos = require('../models/Viejos');
 const nodemailer = require("nodemailer");
-
-const crearEmpresa= async(req,res = response) =>{
-    const {mail,pass}=req.body;
-
-    try {
-        const flagcc=checkCuilCuit(req.body.cuil_cuit);
-        if(!flagcc){
-            return res.status(400).json({
-                ok:false,
-                msg:'Cuil/Cuit invalido'
-            });
-        }
-        const existeEmail= await Usuario.findOne({mail});
-        if(existeEmail){
-            return res.status(400).json({
-                ok:false,
-                msg:'Ya existe una cuenta con ese e-mail'
-            });
-        }
-        const existeEmail2= await Empresa.findOne({mail});
-        if(existeEmail2){
-            return res.status(400).json({
-                ok:false,
-                msg:'Ya existe una cuenta con ese e-mail'
-            });
-        }
-
-        const empresa= new Empresa(req.body);
-
-        const salt=bcrypt.genSaltSync();
-        empresa.pass=bcrypt.hashSync(pass,salt);
-        empresa.habilitado=false;
-        empresa.validado=false;
-
-        let date_time=new Date();
-        let date=("0" + date_time.getDate()).slice(-2);
-        let month=("0" + (date_time.getMonth() + 1)).slice(-2);
-        let year=date_time.getFullYear();
-        let hours=date_time.getHours();
-        let minutes=date_time.getMinutes();
-        let fecha=date+"-"+month+"-"+year+" "+hours+":"+minutes;   
-        empresa.ultima_conexion=fecha
-        
-        await empresa.save();
-        const token= await generarJWT(empresa.uid,1);
-        notificar(empresa.mail,empresa.uid,2)
-
-        res.json({
-            ok:true,
-            mail,
-            token
-        });
-        
-    } catch (error) {
-        console.log(error);
-        res.status(500).json({
-            ok:false,
-            msg:'error'
-        });
-    }
-};
+const Usuario = require('../models/usuario');
+const Empresa = require('../models/empresa');
 
 const crearUsuario= async(req,res = response) =>{
-    const {mail,pass}=req.body;
+    const {mail,pass,cuil_cuit,tipo}=req.body;
 
     try {
-        const flagcc=checkCuilCuit(req.body.cuil_cuit);
+        const flagcc=checkCuilCuit(cuil_cuit);
         if(!flagcc){
             return res.status(400).json({
                 ok:false,
@@ -80,13 +18,6 @@ const crearUsuario= async(req,res = response) =>{
         }
         const existeEmail= await Usuario.findOne({mail});
         if(existeEmail){
-            return res.status(400).json({
-                ok:false,
-                msg:'Ya existe una cuenta con ese e-mail'
-            });
-        }
-        const existeEmail2= await Empresa.findOne({mail});
-        if(existeEmail2){
             return res.status(400).json({
                 ok:false,
                 msg:'Ya existe una cuenta con ese e-mail'
@@ -100,10 +31,20 @@ const crearUsuario= async(req,res = response) =>{
         usuario.habilitado=false;
         usuario.validado=false; 
         usuario.ultima_conexion=timeNow();
-        
         await usuario.save();
-        const token= await generarJWT(usuario.uid,1);
-        notificar(usuario.mail,usuario.uid,2)
+
+        const token= await generarJWT(usuario._id,1);
+        notificar(usuario.mail,usuario._id,2)
+
+        if(tipo=='emp'){
+            let dato={
+                'user_id':usuario._id,
+                'nombre_comercial':req.body.nombre_comercial,
+                'razon_social':req.body.razon_social
+            }
+            const empresa= new Empresa(dato);
+            await empresa.save();
+        }
 
         res.json({
             ok:true,
@@ -124,27 +65,15 @@ const login=async(req,res=response)=>{
     const { mail, pass }= req.body;
 
     try {        
-        let flag1, flag2= false;
         const usuarioDB= await Usuario.findOne({mail});    
         if(!usuarioDB){
-            flag1=true
-        }
-        const usuarioDB2= await Empresa.findOne({mail});
-        if(!usuarioDB2){
-            flag2=true
-        }
-        if(flag1 && flag2){
             return res.status(404).json({
                 ok:false,
                 msg:'No se encontro un usuario con ese e-mail'
             })
         }
 
-        let cuentaEncontrada;
-        if(!flag1) cuentaEncontrada=usuarioDB;
-        if(!flag2) cuentaEncontrada=usuarioDB2;
-
-        const validPassword=bcrypt.compareSync(pass,cuentaEncontrada.pass);
+        const validPassword=bcrypt.compareSync(pass,usuarioDB.pass);
         if(!validPassword){
             return res.status(400).json({
                 ok:false,
@@ -152,24 +81,30 @@ const login=async(req,res=response)=>{
             })
         }
 
-        const token= await generarJWT(cuentaEncontrada.id,1);
-        if(!cuentaEncontrada.validado || !cuentaEncontrada.habilitado){
-            if(!cuentaEncontrada.validado){
-                notificar(cuentaEncontrada.mail,cuentaEncontrada.id,2)
+        let user = usuarioDB.nombre_apellido;
+        if(usuarioDB.tipo=="emp"){
+            const empresaDB= await Empresa.findOne({user_id:usuarioDB._id});
+            user=empresaDB.nombre_comercial;
+        }
+
+        const token= await generarJWT(usuarioDB.id,1);
+        if(!usuarioDB.validado || !usuarioDB.habilitado){
+            if(!usuarioDB.validado){
+                notificar(usuarioDB.mail,usuarioDB.id,2)
             }
             res.json({
                 ok:false,
-                validado: cuentaEncontrada.validado,
-                habilitado: cuentaEncontrada.habilitado,
-                mail: cuentaEncontrada.mail,
+                validado: usuarioDB.validado,
+                habilitado: usuarioDB.habilitado,
+                mail: usuarioDB.mail,
                 token,
-                user: cuentaEncontrada.nombre_comercial ? cuentaEncontrada.nombre_comercial : cuentaEncontrada.nombre_apellido
+                user: usuarioDB.nombre_apellido
             })
         }else{
             res.json({
                 ok:true,
                 token,
-                user: cuentaEncontrada.nombre_comercial ? cuentaEncontrada.nombre_comercial : cuentaEncontrada.nombre_apellido
+                user: usuarioDB.nombre_apellido
             })
         }
     } catch (error) {
@@ -184,30 +119,23 @@ const login=async(req,res=response)=>{
 const renewToken= async(req,res=response)=>{    
     const _id=req.uid;
     const token= await generarJWT(_id,1);
-    const empDB= await Empresa.findById(_id)
-    const userDB= await Usuario.findById(_id)
+    const usuarioDB= await Usuario.findById(_id)
 
-    if(!empDB && !userDB){
+    if(!usuarioDB){
         res.json({
             ok:false
         })
     }else{
-        let nombre, email;
-        if(empDB){
-            let {nombre_comercial, mail}=empDB
-            nombre=nombre_comercial;
-            email=mail;
-        }
-        if(userDB){
-            let {nombre_apellido, mail}=userDB
-            nombre=nombre_apellido;
-            email=mail;
+        let user = usuarioDB.nombre_apellido;
+        if(usuarioDB.tipo=="emp"){
+            const empresaDB= await Empresa.findOne({user_id:usuarioDB._id});
+            user=empresaDB.nombre_comercial;
         }
         res.json({
             ok:true,
             token,
-            nombre,
-            email
+            nombre: user,
+            email: usuarioDB.mail
         })
     }
 }
@@ -289,24 +217,17 @@ const notificar= async(mail,id,tipo)=>{
 
 const validarCuenta= async(req,res=response)=>{    
     const _id=req.uid;
-    const empDB= await Empresa.findById(_id)
-    const userDB= await Usuario.findById(_id)
+    const usuarioDB= await Usuario.findById(_id)
     
-    if(!empDB && !userDB){
+    if(!usuarioDB){
         res.json({
             ok:false
         })
     }else{
-        if(empDB){
-            const {validado, ...campos}=empDB;
-            campos._doc.validado=true;
-            await Empresa.findByIdAndUpdate(_id, campos,{new:true});   
-        }
-        if(userDB){
-            const {validado, ...campos}=userDB;
-            campos._doc.validado=true;
-            await Usuario.findByIdAndUpdate(_id, campos,{new:true});   
-        }
+        const {validado, ...campos}=usuarioDB;
+        campos._doc.validado=true;
+        await Usuario.findByIdAndUpdate(_id, campos,{new:true});   
+
         res.json({
             ok:true,
         })
@@ -316,19 +237,15 @@ const validarCuenta= async(req,res=response)=>{
 const sendCambio= async(req,res=response)=>{  
     const {mail}=req.body;
 
-    let flag1,flag2=false;
     const existeEmail= await Usuario.findOne({mail});
-    if(!existeEmail) flag1=true;
-    const existeEmail2= await Empresa.findOne({mail});
-    if(!existeEmail2) flag2=true;
-    if(flag1 && flag2){
+    if(!existeEmail){
         return res.status(400).json({
             ok:false,
             msg:'No existe una cuenta con ese e-mail'
         });
     }
 
-    notificar(mail,mail,4)
+    notificar(mail,[mail,existeEmail._id],4)
 
     return res.json({
         ok:true,
@@ -338,31 +255,28 @@ const sendCambio= async(req,res=response)=>{
 
 const cambiarPass= async(req,res=response)=>{    
     const mail=req.uid;
-    const passN=req.body.pass;    
-    const empDB= await Empresa.findOne({mail})
-    const userDB= await Usuario.findOne({mail})
     
-    if(!empDB && !userDB){
+    const passN=req.body.pass;    
+    const usuarioDB= await Usuario.findById(mail[1])
+    
+    if(!usuarioDB){
         res.json({
             ok:false
         })
-    }else{
-        if(empDB){
-            const {pass, ...campos}=empDB;
-            const salt=bcrypt.genSaltSync();
-            campos._doc.pass=bcrypt.hashSync(passN,salt);
-            await Empresa.findByIdAndUpdate(empDB._id, campos,{new:true});   
-        }
-        if(userDB){
-            const {validado, ...campos}=userDB;
-            const salt=bcrypt.genSaltSync();
-            campos._doc.pass=bcrypt.hashSync(passN,salt);
-            await Usuario.findByIdAndUpdate(userDB._id, campos,{new:true});   
-        }
+    }else if(usuarioDB.mail==mail[0]){
+        const {validado, ...campos}=usuarioDB;
+        const salt=bcrypt.genSaltSync();
+        campos._doc.pass=bcrypt.hashSync(passN,salt);
+        await Usuario.findByIdAndUpdate(usuarioDB._id, campos,{new:true});   
+
         res.json({
             ok:true,
+        })
+    }else{
+        res.json({
+            ok:false
         })
     }
 }
 
-module.exports={crearEmpresa, crearUsuario, login, renewToken, validarCuenta, cambiarPass, sendCambio}
+module.exports={ crearUsuario, login, renewToken, validarCuenta, cambiarPass, sendCambio}

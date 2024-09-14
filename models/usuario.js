@@ -16,6 +16,7 @@ const UsuarioSchema = Schema({
     habilitado: { type: Boolean, required: true },
     ultima_conexion: { type: String, required: true },
     validado: { type: Boolean, required: true },
+    tipo: { type: String, required: true },
 });
 
 UsuarioSchema.method('toJSON', function() {
