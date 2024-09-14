@@ -3,6 +3,7 @@ const { generarJWT } = require('../helpers/jwt');
 const bcrypt=require('bcryptjs');
 const Admin = require('../models/admin');
 const Usuario = require('../models/usuario');
+const Empresa = require('../models/empresa');
 
 const login=async(req,res=response)=>{
     const { user, pass }= req.body;
@@ -102,4 +103,34 @@ const getUsers= async(req,res=response) =>{
     });
 }
 
-module.exports={ login, renewToken, getUsers }
+const deleteUser=async(req,res=response) =>{
+    const id=req.body.id;
+    try {        
+        const adminDB= await Admin.findById(req.uid)
+
+        if(!adminDB){
+            res.json({
+                ok:false
+            })
+        }
+        
+        const user= await Usuario.findById(id);
+        if(user.tipo=='emp'){
+            await Empresa.deleteMany({'mail': { $eq: user.mail}})
+        }
+        await Usuario.findByIdAndDelete(id);
+        
+        res.json({
+            ok:true,
+        })
+        
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({
+            ok:false,
+            msg:'error borrar'
+        });
+    }
+}
+
+module.exports={ login, renewToken, getUsers, deleteUser }

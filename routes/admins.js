@@ -2,7 +2,7 @@ const { Router }=require('express');
 const { check }=require('express-validator');
 const { validarCampos } = require('../middlewares/validar-campos');
 const { validarJWT } = require('../middlewares/validar-jwt');
-const { login, renewToken, getUsers } = require('../controllers/admin');
+const { login, renewToken, getUsers, deleteUser } = require('../controllers/admin');
 
 const router=Router();
 
@@ -20,5 +20,12 @@ router.post('/users', [
     validarCampos,
     validarJWT
 ], getUsers);
+
+router.post('/deleteUser', [
+    check('token','el campo es obligatorio').not().isEmpty(),
+    check('id','el campo es obligatorio').isMongoId(),
+    validarCampos,
+    validarJWT
+], deleteUser);
 
 module.exports=router;
