@@ -38,7 +38,7 @@ const crearUsuario= async(req,res = response) =>{
 
         if(tipo=='emp'){
             let dato={
-                'user_id':usuario._id,
+                'mail':usuario.mail,
                 'nombre_comercial':req.body.nombre_comercial,
                 'razon_social':req.body.razon_social
             }
