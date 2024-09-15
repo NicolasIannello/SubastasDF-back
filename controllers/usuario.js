@@ -83,7 +83,7 @@ const login=async(req,res=response)=>{
 
         let user = usuarioDB.nombre_apellido;
         if(usuarioDB.tipo=="emp"){
-            const empresaDB= await Empresa.findOne({user_id:usuarioDB._id});
+            const empresaDB= await Empresa.findOne({mail:usuarioDB.mail});
             user=empresaDB.nombre_comercial;
         }
 
@@ -98,7 +98,7 @@ const login=async(req,res=response)=>{
                 habilitado: usuarioDB.habilitado,
                 mail: usuarioDB.mail,
                 token,
-                user: usuarioDB.nombre_apellido
+                user: user
             })
         }else{
             res.json({
@@ -128,7 +128,7 @@ const renewToken= async(req,res=response)=>{
     }else{
         let user = usuarioDB.nombre_apellido;
         if(usuarioDB.tipo=="emp"){
-            const empresaDB= await Empresa.findOne({user_id:usuarioDB._id});
+            const empresaDB= await Empresa.findOne({mail:usuarioDB.mail});
             user=empresaDB.nombre_comercial;
         }
         res.json({
