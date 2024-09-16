@@ -133,4 +133,44 @@ const deleteUser=async(req,res=response) =>{
     }
 }
 
-module.exports={ login, renewToken, getUsers, deleteUser }
+const actualizarUser= async(req,res=response)=>{    
+    const {id, campos} = req.body;
+    const adminDB= await Admin.findById(req.uid);    
+
+    if(!adminDB){
+        res.json({
+            ok:false
+        })
+    }else{
+        const usuarioDB= await Usuario.findById(id);
+        const empresaDB= await Empresa.find({mail:usuarioDB.mail});
+        if(!usuarioDB){
+            res.json({
+                ok:false
+            })
+        }
+        const {...camposU}=usuarioDB;
+        camposU._doc=campos;
+        
+        if(empresaDB[0]){
+            if(campos.tipo=='emp'){
+                const {...camposE}=empresaDB[0];
+                camposE._doc=campos;
+                await Empresa.findByIdAndUpdate(empresaDB[0]._id, campos,{new:true});       
+            }else{
+                await Empresa.findByIdAndDelete(empresaDB[0]._id);
+            }
+        }else if(campos.tipo=='emp'){
+            const empresa= new Empresa(campos);
+            await empresa.save();
+        }
+        
+        await Usuario.findByIdAndUpdate(id, campos,{new:true});   
+
+        res.json({
+            ok:true,
+        })
+    }
+}
+
+module.exports={ login, renewToken, getUsers, deleteUser, actualizarUser }
