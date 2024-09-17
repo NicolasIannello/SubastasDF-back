@@ -7,7 +7,7 @@ const { validarJWT } = require('../middlewares/validar-jwt');
 const router=Router();
 
 router.post('/crearUsuario', [
-    check('nombre_apellido','campo obligatorio').not().isEmpty(),
+    check('nombre','campo obligatorio').not().isEmpty(),
     check('cuil_cuit','campo obligatorio').not().isEmpty(),
     check('telefono','telefono no valido').isMobilePhone(),
     check('actividad','campo obligatorio').not().isEmpty(),

@@ -2,7 +2,7 @@ const { Schema, model } = require('mongoose');
 
 const EmpresaSchema = Schema({
     mail: { type: String, required: true },
-    nombre_comercial: { type: String, required: true },
+    persona_responsable: { type: String, required: true },
     razon_social: { type: String, required: true },
 });
 

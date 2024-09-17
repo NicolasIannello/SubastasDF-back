@@ -39,7 +39,7 @@ const crearUsuario= async(req,res = response) =>{
         if(tipo=='emp'){
             let dato={
                 'mail':usuario.mail,
-                'nombre_comercial':req.body.nombre_comercial,
+                'persona_responsable':req.body.persona_responsable,
                 'razon_social':req.body.razon_social
             }
             const empresa= new Empresa(dato);
@@ -81,12 +81,6 @@ const login=async(req,res=response)=>{
             })
         }
 
-        let user = usuarioDB.nombre_apellido;
-        if(usuarioDB.tipo=="emp"){
-            const empresaDB= await Empresa.findOne({mail:usuarioDB.mail});
-            user=empresaDB.nombre_comercial;
-        }
-
         const token= await generarJWT(usuarioDB.id,1);
         if(!usuarioDB.validado || !usuarioDB.habilitado){
             if(!usuarioDB.validado){
@@ -98,13 +92,13 @@ const login=async(req,res=response)=>{
                 habilitado: usuarioDB.habilitado,
                 mail: usuarioDB.mail,
                 token,
-                user: user
+                user: usuarioDB.nombre
             })
         }else{
             res.json({
                 ok:true,
                 token,
-                user: usuarioDB.nombre_apellido
+                user: usuarioDB.nombre
             })
         }
     } catch (error) {
@@ -125,16 +119,11 @@ const renewToken= async(req,res=response)=>{
         res.json({
             ok:false
         })
-    }else{
-        let user = usuarioDB.nombre_apellido;
-        if(usuarioDB.tipo=="emp"){
-            const empresaDB= await Empresa.findOne({mail:usuarioDB.mail});
-            user=empresaDB.nombre_comercial;
-        }
+    }else{        
         res.json({
             ok:true,
             token,
-            nombre: user,
+            nombre: usuarioDB.nombre,
             email: usuarioDB.mail
         })
     }

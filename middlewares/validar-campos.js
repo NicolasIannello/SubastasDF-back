@@ -23,8 +23,8 @@ const validarCampos= (req,res=response,next)=>{
 const validarTipoUser= (req,res=response,next)=>{
     let tipo=req.body.tipo
 
-    if(tipo=='emp'){        
-        if(!req.body.razon_social || !req.body.nombre_comercial || req.body.razon_social=="" || req.body.nombre_comercial==""){
+    if(tipo=='emp'){
+        if(!req.body.razon_social || !req.body.persona_responsable || req.body.razon_social=="" || req.body.persona_responsable==""){        
             return res.status(400).json({
                 ok:'error',
             })
