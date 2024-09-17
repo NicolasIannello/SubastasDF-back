@@ -173,4 +173,42 @@ const actualizarUser= async(req,res=response)=>{
     }
 }
 
-module.exports={ login, renewToken, getUsers, deleteUser, actualizarUser }
+const crearAdmin= async(req,res = response) =>{
+    const {pass,usuario}=req.body;
+
+    try {
+        const adminDB= await Admin.findById(req.uid)
+        if(!adminDB){
+            res.json({
+                ok:false
+            })
+        }
+
+        const existeAdmin= await Admin.findOne({usuario});
+        if(existeAdmin){
+            return res.status(400).json({
+                ok:false,
+                msg:'Ya existe una cuenta con usuario'
+            });
+        }
+
+        const admin= new Admin(req.body);
+
+        const salt=bcrypt.genSaltSync();
+        admin.pass=bcrypt.hashSync(pass,salt);
+        await admin.save();
+
+        res.json({
+            ok:true,
+        });
+        
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({
+            ok:false,
+            msg:'error'
+        });
+    }
+};
+
+module.exports={ login, renewToken, getUsers, deleteUser, actualizarUser, crearAdmin }
