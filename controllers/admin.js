@@ -62,8 +62,12 @@ const renewToken= async(req,res=response)=>{
 const getUsers= async(req,res=response) =>{
     const desde= parseInt(req.query.desde) || 0;
     const limit= parseInt(req.query.limit) || 20;
+    const orden= parseInt(req.query.orden) || 1;
+    const order= req.query.order || '_id';
+    var sortOperator = { "$sort": { } };
+    sortOperator["$sort"][order] = orden;
+    
     const adminDB= await Admin.findById(req.uid)
-
     if(!adminDB){
         res.json({
             ok:false
@@ -90,9 +94,10 @@ const getUsers= async(req,res=response) =>{
                 "dato_empresa.mail": 0,
                 "dato_empresa._id": 0,
             } },
+            sortOperator,
             { $skip: desde },
             { $limit: limit },
-        ]),
+        ]).collation({locale: 'en'}),
         Usuario.countDocuments()
     ]); 
     
