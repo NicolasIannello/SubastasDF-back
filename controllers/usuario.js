@@ -82,6 +82,10 @@ const login=async(req,res=response)=>{
         }
 
         const token= await generarJWT(usuarioDB.id,1);
+        const {...campos}=usuarioDB;
+        campos._doc.ultima_conexion=timeNow();
+        await Usuario.findByIdAndUpdate(usuarioDB.id, campos,{new:true});
+
         if(!usuarioDB.validado || !usuarioDB.habilitado){
             if(!usuarioDB.validado){
                 notificar(usuarioDB.mail,usuarioDB.id,2)
@@ -120,6 +124,10 @@ const renewToken= async(req,res=response)=>{
             ok:false
         })
     }else{        
+        const {...campos}=usuarioDB;
+        campos._doc.ultima_conexion=timeNow();
+        await Usuario.findByIdAndUpdate(usuarioDB.id, campos,{new:true});  
+
         res.json({
             ok:true,
             token,
