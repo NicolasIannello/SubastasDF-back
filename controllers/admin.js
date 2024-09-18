@@ -259,4 +259,52 @@ const buscarDato= async(req,res=response) =>{
     });
 }
 
-module.exports={ login, renewToken, getUsers, deleteUser, actualizarUser, crearAdmin, buscarDato }
+const excelUsuarios= async(req,res=response) =>{
+    const flag= req.body.estado;
+
+    const adminDB= await Admin.findById(req.uid)
+    if(!adminDB){
+        res.json({
+            ok:false
+        })
+    }
+
+    const busqueda= await Usuario.aggregate([
+        { $match: { habilitado: flag } },
+        { $project: {
+            __v: 0,
+            "__v": 0,
+            "pass": 0,
+            "pais": 0,
+            "provincia": 0,
+            "ciudad": 0,
+            "domicilio": 0,
+            "postal": 0,
+            "actividad": 0,
+            "tipo": 0,
+            "como_encontro": 0,
+            "_id": 0,
+        } },
+        { $lookup: {
+            from: "empresas",
+            localField: "mail",
+            foreignField: "mail",
+            as: "dato_empresa"
+        } },
+        {$unwind: { path: "$dato_empresa", preserveNullAndEmptyArrays: true }},
+        { $project: {
+            __v: 0,
+            "dato_empresa.__v": 0,
+            "dato_empresa.mail": 0,
+            "dato_empresa._id": 0,
+            "dato_empresa.razon_social": 0,
+        } },
+    ]).collation({locale: 'en'});
+    
+    res.json({
+        ok:true,
+        busqueda,
+    });
+}
+
+module.exports={ login, renewToken, getUsers, deleteUser, actualizarUser, crearAdmin, buscarDato, excelUsuarios }
