@@ -216,4 +216,47 @@ const crearAdmin= async(req,res = response) =>{
     }
 };
 
-module.exports={ login, renewToken, getUsers, deleteUser, actualizarUser, crearAdmin }
+const buscarDato= async(req,res=response) =>{
+    const dato= req.body.dato;
+    const tipo= req.body.datoTipo;
+    //{ $match: { nombre: { $regex: 'demo', $options: "i" }  } };
+    var regExOperator = { "$match": { } }
+    regExOperator["$match"][tipo] = { "$regex": { }, "$options": "i" };
+    regExOperator["$match"][tipo]["$regex"] = dato;
+
+    const adminDB= await Admin.findById(req.uid)
+    if(!adminDB){
+        res.json({
+            ok:false
+        })
+    }
+
+    const busqueda= await Usuario.aggregate([
+        regExOperator,
+        { $project: {
+            __v: 0,
+            "__v": 0,
+            "pass": 0,
+        } },
+        { $lookup: {
+            from: "empresas",
+            localField: "mail",
+            foreignField: "mail",
+            as: "dato_empresa"
+        } },
+        {$unwind: { path: "$dato_empresa", preserveNullAndEmptyArrays: true }},
+        { $project: {
+            __v: 0,
+            "dato_empresa.__v": 0,
+            "dato_empresa.mail": 0,
+            "dato_empresa._id": 0,
+        } },
+    ]).collation({locale: 'en'});
+    
+    res.json({
+        ok:true,
+        busqueda,
+    });
+}
+
+module.exports={ login, renewToken, getUsers, deleteUser, actualizarUser, crearAdmin, buscarDato }
