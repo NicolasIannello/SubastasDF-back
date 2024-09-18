@@ -139,7 +139,7 @@ const deleteUser=async(req,res=response) =>{
 }
 
 const actualizarUser= async(req,res=response)=>{    
-    const {id, campos} = req.body;
+    const {id, campos, nuevaPass} = req.body;
     const adminDB= await Admin.findById(req.uid);    
 
     if(!adminDB){
@@ -156,6 +156,10 @@ const actualizarUser= async(req,res=response)=>{
         }
         const {...camposU}=usuarioDB;
         camposU._doc=campos;
+        if(nuevaPass!=''){
+            const salt=bcrypt.genSaltSync();
+            camposU._doc.pass=bcrypt.hashSync(nuevaPass,salt);
+        }
         
         if(empresaDB[0]){
             if(campos.tipo=='emp'){
