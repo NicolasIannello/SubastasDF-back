@@ -175,9 +175,11 @@ const notificar= async(mail,id,tipo)=>{
     const transporter = nodemailer.createTransport({
         maxConnections: 1,
         pool: true,
-        service: process.env.MSERVICE,
+        host: process.env.MSERVICE,
+        port: 465,
+        secure: true,
         auth: {
-            user: 'gruppoDF.subastas@outlook.com',
+            user: 'contacto@gruppodf.com.ar',
             pass: process.env.MPASS
         }
     });
@@ -197,7 +199,7 @@ const notificar= async(mail,id,tipo)=>{
     }
 
     await transporter.sendMail({
-        from: '"Gruppo DF Subastas" <gruppoDF.subastas@outlook.com>',
+        from: '"Gruppo DF Subastas" <contacto@gruppodf.com.ar>',
         to: mail,
         subject: title,
         text: msg2,
