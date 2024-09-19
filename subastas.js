@@ -11,8 +11,8 @@ app.use( express.json() );
 
 dbConnection();
 
-app.use('/api/usuarios', require('./routes/usuarios'));
-app.use('/api/admin', require('./routes/admins'));
+app.use('/subasta/usuarios', require('./routes/usuarios'));
+app.use('/subasta/admin', require('./routes/admins'));
 
 app.listen( process.env.PORT, () =>{
     console.log('Iniciando');
