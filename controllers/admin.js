@@ -110,6 +110,7 @@ const getUsers= async(req,res=response) =>{
 
 const deleteUser=async(req,res=response) =>{
     const id=req.body.id;
+    const tipo=req.body.user;
     try {        
         const adminDB= await Admin.findById(req.uid)
 
@@ -119,11 +120,16 @@ const deleteUser=async(req,res=response) =>{
             })
         }
         
-        const user= await Usuario.findById(id);
-        if(user.tipo=='emp'){
-            await Empresa.deleteMany({'mail': { $eq: user.mail}})
+        if(tipo=="user"){
+            const user= await Usuario.findById(id);
+            if(user.tipo=='emp'){
+                await Empresa.deleteMany({'mail': { $eq: user.mail}})
+            }
+            await Usuario.findByIdAndDelete(id);
+        }else{
+            await Admin.findByIdAndDelete(id);
         }
-        await Usuario.findByIdAndDelete(id);
+        
         
         res.json({
             ok:true,
@@ -220,13 +226,51 @@ const crearAdmin= async(req,res = response) =>{
     }
 };
 
+const getAdmins= async(req,res = response) =>{
+    try {
+        const adminDB= await Admin.findById(req.uid)
+        if(!adminDB){
+            res.json({
+                ok:false
+            })
+        }
+
+        const [ admins, total ]= await Promise.all([
+            Admin.aggregate([
+                { $project: {
+                    __v: 0,
+                    "__v": 0,
+                    "pass": 0,
+                } },
+            ]),
+            Usuario.countDocuments()
+        ]); 
+
+        res.json({
+            ok:true,
+            admins,
+            total
+        });
+        
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({
+            ok:false,
+            msg:'error'
+        });
+    }
+};
+
 const buscarDato= async(req,res=response) =>{
     const dato= req.body.dato;
     const tipo= req.body.datoTipo;
+    const user= req.body.datoTipoUser;
     //{ $match: { nombre: { $regex: 'demo', $options: "i" }  } };
     var regExOperator = { "$match": { } }
     regExOperator["$match"][tipo] = { "$regex": { }, "$options": "i" };
     regExOperator["$match"][tipo]["$regex"] = dato;
+    var regExOperator2 = { "$match": { "tipo": { "$regex": { }, "$options": "i" } } }
+    regExOperator2["$match"]["tipo"]["$regex"] = user;
 
     const adminDB= await Admin.findById(req.uid)
     if(!adminDB){
@@ -237,6 +281,7 @@ const buscarDato= async(req,res=response) =>{
 
     const busqueda= await Usuario.aggregate([
         regExOperator,
+        regExOperator2,
         { $project: {
             __v: 0,
             "__v": 0,
@@ -311,4 +356,4 @@ const excelUsuarios= async(req,res=response) =>{
     });
 }
 
-module.exports={ login, renewToken, getUsers, deleteUser, actualizarUser, crearAdmin, buscarDato, excelUsuarios }
+module.exports={ login, renewToken, getUsers, deleteUser, actualizarUser, crearAdmin, buscarDato, excelUsuarios, getAdmins }
