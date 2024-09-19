@@ -2,7 +2,7 @@ const { Router }=require('express');
 const { check }=require('express-validator');
 const { validarCampos } = require('../middlewares/validar-campos');
 const { validarJWT } = require('../middlewares/validar-jwt');
-const { login, renewToken, getUsers, deleteUser, actualizarUser, crearAdmin, buscarDato, excelUsuarios } = require('../controllers/admin');
+const { login, renewToken, getUsers, deleteUser, actualizarUser, crearAdmin, buscarDato, excelUsuarios, getAdmins } = require('../controllers/admin');
 
 const router=Router();
 
@@ -60,5 +60,12 @@ router.post('/excelUsuario', [
     validarCampos,
     validarJWT
 ], excelUsuarios);
+
+router.post('/admins', [
+    check('token','el campo es obligatorio').not().isEmpty(),
+    check('tipo','el campo es obligatorio').not().isEmpty(),
+    validarCampos,
+    validarJWT
+], getAdmins);
 
 module.exports=router;
