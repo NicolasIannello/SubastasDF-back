@@ -30,6 +30,7 @@ const crearUsuario= async(req,res = response) =>{
         usuario.pass=bcrypt.hashSync(pass,salt);
         usuario.habilitado=false;
         usuario.validado=false; 
+        usuario.grupo="general"; 
         usuario.ultima_conexion=timeNow();
         await usuario.save();
 
