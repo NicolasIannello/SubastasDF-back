@@ -17,6 +17,7 @@ const UsuarioSchema = Schema({
     ultima_conexion: { type: String, required: true },
     validado: { type: Boolean, required: true },
     como_encontro: { type: String, required: true },
+    grupo: { type: String },
 });
 
 UsuarioSchema.method('toJSON', function() {
