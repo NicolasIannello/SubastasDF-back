@@ -171,7 +171,7 @@ const actualizarUser= async(req,res=response)=>{
             if(campos.tipo=='emp'){
                 const {...camposE}=empresaDB[0];
                 camposE._doc=campos;
-                await Empresa.findByIdAndUpdate(empresaDB[0]._id, campos,{new:true});       
+                await Empresa.findByIdAndUpdate(empresaDB[0]._id, camposE,{new:true});       
             }else{
                 await Empresa.findByIdAndDelete(empresaDB[0]._id);
             }
@@ -180,7 +180,7 @@ const actualizarUser= async(req,res=response)=>{
             await empresa.save();
         }
         
-        await Usuario.findByIdAndUpdate(id, campos,{new:true});   
+        await Usuario.findByIdAndUpdate(id, camposU,{new:true});   
 
         res.json({
             ok:true,
