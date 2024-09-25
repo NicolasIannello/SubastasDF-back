@@ -190,13 +190,13 @@ const notificar= async(mail,id,tipo)=>{
         case 2:
             title="Verificacion de cuenta";
             msg='Para terminar de configurar su cuenta siga el link.<br>'+process.env.LINK+'/verificar/'+token;
-            msg2="Para terminar de configurar su cuenta siga el link."+process.env.LINK+"/verificar/"+token;
-            break;
+            msg2="Para terminar de configurar su cuenta siga el link.\n"+process.env.LINK+"/verificar/"+token;
+        break;
         case 4:
             title="Cambio de contraseña";
             msg='Para realizar un cambio de contraseña siga el link.<br>'+process.env.LINK+'/cambio/'+token;
-            msg2="Para realizar un cambio de contraseña siga el link."+process.env.LINK+"/cambio/"+token;
-            break;
+            msg2="Para realizar un cambio de contraseña siga el link.\n"+process.env.LINK+"/cambio/"+token;
+        break;
     }
 
     await transporter.sendMail({
@@ -213,6 +213,44 @@ const notificar= async(mail,id,tipo)=>{
     });
     
     return true;
+};
+
+const mailContacto= async(req,res=response)=>{    
+    const {mensaje,mensaje2,asunto,nombre_apellido,mail,como_encontro} = req.body
+    const transporter = nodemailer.createTransport({
+        maxConnections: 1,
+        pool: true,
+        host: process.env.MSERVICE,
+        port: 465,
+        secure: true,
+        auth: {
+            user: 'contacto@gruppodf.com.ar',
+            pass: process.env.MPASS
+        }
+    });
+
+    let msg = "Nombre y apellido: "+nombre_apellido+"\n"+"E-Mail: "+mail+"\n"+"Como encontro: "+como_encontro+"\n"+"Mensaje:\n"+mensaje
+    let msgHTML = "Nombre y apellido: "+nombre_apellido+"<br><br>"+"E-Mail: "+mail+"<br><br>"+"Como encontro: "+como_encontro+"<br><br>"+"Mensaje:<br>"+mensaje2
+
+    transporter.sendMail({
+        from: '"Gruppo DF Subastas" <contacto@gruppodf.com.ar>',
+        to: 'contacto@gruppodf.com.ar',
+        subject: "Formulario contacto: "+asunto,
+        text: msg,
+        html: msgHTML,
+    }, function(error, info){
+        if (error) {
+            console.log(error);
+            return res.status(400).json({
+                ok:false,
+                msg:'error'
+            });        
+        }
+    });
+    
+    res.json({
+        ok:true,
+    })
 };
 
 const validarCuenta= async(req,res=response)=>{    
@@ -279,4 +317,4 @@ const cambiarPass= async(req,res=response)=>{
     }
 }
 
-module.exports={ crearUsuario, login, renewToken, validarCuenta, cambiarPass, sendCambio}
+module.exports={ crearUsuario, login, renewToken, validarCuenta, cambiarPass, sendCambio, mailContacto }
