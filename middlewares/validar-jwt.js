@@ -14,6 +14,7 @@ const validarJWT=(req,res,next)=>{
     try {
         let secret;
         switch (tipo) {
+            case '1':
             case 1:
                 secret=process.env.JWT_SECRET;
                 break;
