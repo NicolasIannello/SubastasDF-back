@@ -12,7 +12,7 @@ const login=async(req,res=response)=>{
         if(!adminDB){
             return res.status(404).json({
                 ok:false,
-                msg:'No se encontro un usuario'
+                msg:'Datos incorrectos'
             })
         }
 
@@ -20,7 +20,7 @@ const login=async(req,res=response)=>{
         if(!validPassword){
             return res.status(400).json({
                 ok:false,
-                msg:'Contraseña incorrecta'
+                msg:'Datos incorrectos'
             })
         }
 
@@ -356,4 +356,15 @@ const excelUsuarios= async(req,res=response) =>{
     });
 }
 
-module.exports={ login, renewToken, getUsers, deleteUser, actualizarUser, crearAdmin, buscarDato, excelUsuarios, getAdmins }
+const isAdmin = async(res,id)=>{
+    const adminDB= await Admin.findById(id)
+    if(!adminDB){        
+        res.json({
+            ok:false
+        })
+        return false;
+    }
+    return true;
+}
+
+module.exports={ login, renewToken, getUsers, deleteUser, actualizarUser, crearAdmin, buscarDato, excelUsuarios, getAdmins, isAdmin }
