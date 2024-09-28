@@ -77,4 +77,36 @@ const crearLote= async(req,res = response) =>{
     }
 };
 
-module.exports={ crearLote }
+const getLotes= async(req,res = response) =>{
+    if(await isAdmin(res,req.uid)){
+        const desde= parseInt(req.query.desde) || 0;
+        const limit= parseInt(req.query.limit) || 20;
+        const orden= parseInt(req.query.orden) || 1;
+        const order= req.query.order || '_id';
+        var sortOperator = { "$sort": { } };
+        sortOperator["$sort"][order] = orden;
+
+        const [ lotes, total ]= await Promise.all([
+            Lote.aggregate([
+                { $project: {
+                    __v: 0,
+                    "descripcion": 0,
+                    "aclaracion": 0,
+                    "terminos_condiciones": 0,
+                } },
+                sortOperator,
+                { $skip: desde },
+                { $limit: limit },
+            ]).collation({locale: 'en'}),
+            Lote.countDocuments()
+        ]); 
+        
+        res.json({
+            ok:true,
+            lotes,
+            total
+        });
+    }
+};
+
+module.exports={ crearLote, getLotes }
