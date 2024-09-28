@@ -7,18 +7,8 @@ const { isAdmin } = require('./admin');
 const Imagen = require('../models/imagen');
 
 const crearLote= async(req,res = response) =>{
-    const {titulo}=req.body;
-
     try {
         if(await isAdmin(res,req.uid)){
-            const existeLote= await Lote.findOne({titulo});
-            if(existeLote){
-                return res.status(400).json({
-                    ok:false,
-                    msg:'Ya existe un lote con ese titulo'
-                });
-            }
-
             const pdf=req.files['pdf']
             const nombreCortado=pdf.name.split('.');
             const extensionArchivo=nombreCortado[nombreCortado.length-1];
