@@ -5,6 +5,7 @@ const fs=require('fs');
 const { v4: uuidv4 }=require('uuid');
 const { isAdmin } = require('./admin');
 const Imagen = require('../models/imagen');
+const path=require('path');
 
 const crearLote= async(req,res = response) =>{
     try {
@@ -100,4 +101,61 @@ const getLotes= async(req,res = response) =>{
     }
 };
 
-module.exports={ crearLote, getLotes }
+const lote= async(req,res = response) =>{
+    if(await isAdmin(res,req.uid)){
+        const lote = await Lote.aggregate([
+            { $project: { __v: 0, '_id':0 } },
+            { $lookup: {
+                from: "pdfs",
+                localField: "terminos_condiciones",
+                foreignField: "pdf",
+                as: "pdf"
+            } },
+            {$unwind: { path: "$pdf", preserveNullAndEmptyArrays: true }},
+            { $project: { __v: 0, "pdf.__v": 0, "pdf._id": 0, } },
+            { $lookup: {
+                from: "imagens",
+                localField: "uuid",
+                foreignField: "lote",
+                as: "img"
+            } },
+            { $project: { __v: 0, "img.__v": 0, "img._id": 0, "img.lote": 0, } },
+        ]).collation({locale: 'en'})
+
+        res.json({
+            ok:true,
+            lote
+        });
+    }
+};
+
+const getArchivo= async(req,res = response) =>{
+    const img=req.query.img;
+    const tipo=req.query.tipo;
+    let pathImg;
+    if(tipo=='lotes') {
+        const imagenesDB= await Imagen.find({img});
+        if(imagenesDB.length>0){
+            pathImg=pathImg= path.join( __dirname, '../files/lotes/'+imagenesDB[0].img);
+        }else{
+            pathImg=pathImg= path.join( __dirname, '../files/lotes/'+imagenesDB.img);
+        }
+    }
+    if(tipo=='pdfs') {
+        const PDFDB= await PDF.find({ 'pdf': { $eq: img } });
+        if(PDFDB.length>0){
+            pathImg=pathImg= path.join( __dirname, '../files/pdfs/'+PDFDB[0].pdf);
+        }else{
+            pathImg=pathImg= path.join( __dirname, '../files/pdfs/'+PDFDB.pdf);
+        }
+    }
+
+    if(fs.existsSync(pathImg)){
+        res.sendFile(pathImg);
+    }else{
+        const pathImg= path.join( __dirname, '../files/no-img.jpg');
+        res.sendFile(pathImg);
+    }
+};
+
+module.exports={ crearLote, getLotes, lote, getArchivo }

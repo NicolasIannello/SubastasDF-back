@@ -2,7 +2,7 @@ const { Router }=require('express');
 const { check }=require('express-validator');
 const { validarCampos } = require('../middlewares/validar-campos');
 const { validarJWT } = require('../middlewares/validar-jwt');
-const { crearLote, getLotes } = require('../controllers/lote');
+const { crearLote, getLotes, lote, getArchivo } = require('../controllers/lote');
 const expressFileUpload =require('express-fileupload');
 
 const router=Router();
@@ -27,5 +27,15 @@ router.post('/lotes', [
     validarCampos,
     validarJWT
 ], getLotes);
+
+router.post('/lote', [
+    check('uuid','el campo es obligatorio').not().isEmpty(),
+    check('token','el campo es obligatorio').not().isEmpty(),
+    check('tipo','el campo es obligatorio').not().isEmpty(),
+    validarCampos,
+    validarJWT
+], lote);
+
+router.get('/img', getArchivo);
 
 module.exports=router;
