@@ -1,6 +1,7 @@
 const { Schema, model } = require('mongoose');
 
 const LoteSchema = Schema({
+    uuid: { type: String, required: true },
     titulo: { type: String, required: true },
     descripcion: { type: String, required: true },
     moneda: { type: String, required: true },

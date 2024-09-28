@@ -1,6 +1,7 @@
 const { Schema, model } = require('mongoose');
 
 const PDFSchema = Schema({
+    name: { type: String, require:true },
     pdf: { type: String, require:true }
 });
 

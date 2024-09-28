@@ -24,7 +24,7 @@ const crearLote= async(req,res = response) =>{
             const extensionArchivo=nombreCortado[nombreCortado.length-1];
             const nombreArchivo= uuidv4()+'.'+extensionArchivo;
             const path= './files/pdfs/'+nombreArchivo;
-            const datos={ pdf: nombreArchivo };
+            const datos={ name: nombreCortado[0], pdf: nombreArchivo };
 
             pdf.mv(path, async (err)=>{
                 if(err){
@@ -38,7 +38,8 @@ const crearLote= async(req,res = response) =>{
                 await pdfFile.save();
                 const lote= new Lote(req.body);
                 lote.disponible=true;
-                lote.terminos_condiciones=pdfFile._id;
+                lote.terminos_condiciones=pdfFile.pdf;
+                lote.uuid=uuidv4();
                 await lote.save();  
 
                 for (let i = 0; i < req.files['img'].length; i++) {
@@ -47,7 +48,7 @@ const crearLote= async(req,res = response) =>{
                     const extensionArchivo=nombreCortado[nombreCortado.length-1];
                     const nombreArchivo= uuidv4()+'.'+extensionArchivo;
                     const path= './files/lotes/'+nombreArchivo;
-                    const datos={ lote: lote._id, img: nombreArchivo };
+                    const datos={ lote: lote.uuid, img: nombreArchivo };
         
                     img.mv(path, async (err)=>{
                         if(err){
