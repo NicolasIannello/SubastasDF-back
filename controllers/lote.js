@@ -159,4 +159,39 @@ const getArchivo= async(req,res = response) =>{
     }
 };
 
-module.exports={ crearLote, getLotes, lote, getArchivo }
+const deleteLote=async(req,res=response) =>{
+    const uuid=req.body.uuid;
+    try {        
+        if(await isAdmin(res,req.uid)){
+            const loteDB = await Lote.find({uuid})
+            const imgDB = await Imagen.find({lote:uuid})
+            const pdfDB = await PDF.find({pdf:loteDB[0].terminos_condiciones})
+            
+            if(pdfDB.length!=0){
+                let pathPDF='./files/pdfs/'+pdfDB[0].pdf;
+                if(fs.existsSync(pathPDF)) fs.unlinkSync(pathPDF);
+                await PDF.findByIdAndDelete(pdfDB[0]._id);    
+            }
+            if(imgDB.length!=0){
+                for (let i = 0; i < imgDB.length; i++) {
+                    let pathImg='./files/lotes/'+imgDB[i].img
+                    if(fs.existsSync(pathImg)) fs.unlinkSync(pathImg);
+                    await Imagen.findByIdAndDelete(imgDB[i]._id);
+                }
+            }
+            await Lote.findByIdAndDelete(loteDB[0]._id);
+
+            res.json({
+                ok:true,
+            })
+        }
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({
+            ok:false,
+            msg:'error borrar'
+        });
+    }
+};
+
+module.exports={ crearLote, getLotes, lote, getArchivo, deleteLote }
