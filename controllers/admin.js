@@ -4,6 +4,7 @@ const bcrypt=require('bcryptjs');
 const Admin = require('../models/admin');
 const Usuario = require('../models/usuario');
 const Empresa = require('../models/empresa');
+const Lote = require('../models/lote');
 
 const login=async(req,res=response)=>{
     const { user, pass }= req.body;
@@ -278,29 +279,41 @@ const buscarDato= async(req,res=response) =>{
             ok:false
         })
     }
-
-    const busqueda= await Usuario.aggregate([
-        regExOperator,
-        regExOperator2,
-        { $project: {
-            __v: 0,
-            "__v": 0,
-            "pass": 0,
-        } },
-        { $lookup: {
-            from: "empresas",
-            localField: "mail",
-            foreignField: "mail",
-            as: "dato_empresa"
-        } },
-        {$unwind: { path: "$dato_empresa", preserveNullAndEmptyArrays: true }},
-        { $project: {
-            __v: 0,
-            "dato_empresa.__v": 0,
-            "dato_empresa.mail": 0,
-            "dato_empresa._id": 0,
-        } },
-    ]).collation({locale: 'en'});
+    let busqueda
+    if(user=='lote'){        
+        busqueda= await Lote.aggregate([
+            regExOperator,
+            { $project: {
+                __v: 0,
+                "descripcion": 0,
+                "aclaracion": 0,
+                "terminos_condiciones": 0,
+            } },
+        ]).collation({locale: 'en'});
+    }else{
+        busqueda= await Usuario.aggregate([
+            regExOperator,
+            regExOperator2,
+            { $project: {
+                __v: 0,
+                "__v": 0,
+                "pass": 0,
+            } },
+            { $lookup: {
+                from: "empresas",
+                localField: "mail",
+                foreignField: "mail",
+                as: "dato_empresa"
+            } },
+            {$unwind: { path: "$dato_empresa", preserveNullAndEmptyArrays: true }},
+            { $project: {
+                __v: 0,
+                "dato_empresa.__v": 0,
+                "dato_empresa.mail": 0,
+                "dato_empresa._id": 0,
+            } },
+        ]).collation({locale: 'en'});
+    }
     
     res.json({
         ok:true,
