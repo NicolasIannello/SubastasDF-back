@@ -6,6 +6,7 @@ const { v4: uuidv4 }=require('uuid');
 const { isAdmin } = require('./admin');
 const Imagen = require('../models/imagen');
 const path=require('path');
+const { subirImagen } = require('../helpers/imagenes');
 
 const crearLote= async(req,res = response) =>{
     try {
@@ -32,27 +33,14 @@ const crearLote= async(req,res = response) =>{
                 lote.terminos_condiciones=pdfFile.pdf;
                 lote.uuid=uuidv4();
                 await lote.save();  
-
-                for (let i = 0; i < req.files['img'].length; i++) {
-                    const img=req.files['img'][i]
-                    const nombreCortado=img.name.split('.');
-                    const extensionArchivo=nombreCortado[nombreCortado.length-1];
-                    const nombreArchivo= uuidv4()+'.'+extensionArchivo;
-                    const path= './files/lotes/'+nombreArchivo;
-                    const datos={ lote: lote.uuid, img: nombreArchivo };
-        
-                    img.mv(path, async (err)=>{
-                        if(err){
-                            console.log(err);
-                            return res.status(500).json({
-                                ok:false,
-                                msg:'error en carga de imagen '+nombreCortado[0],
-                            })
-                        }
-                        const imagen = new Imagen(datos);
-                        await imagen.save();
-                    })
-                };
+                
+                if(req.files['img'].length==undefined){
+                    subirImagen(req.files['img'],lote.uuid,res)
+                }else{
+                    for (let i = 0; i < req.files['img'].length; i++) {
+                        subirImagen(req.files['img'][i],lote.uuid,res)
+                    };
+                }
             })            
 
             res.json({
