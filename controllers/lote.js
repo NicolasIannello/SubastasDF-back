@@ -6,7 +6,7 @@ const { v4: uuidv4 }=require('uuid');
 const { isAdmin } = require('./admin');
 const Imagen = require('../models/imagen');
 const path=require('path');
-const { subirImagen } = require('../helpers/imagenes');
+const { subirImagen, borrarImagen, subirPDF } = require('../helpers/imagenes');
 
 const crearLote= async(req,res = response) =>{
     try {
@@ -182,4 +182,63 @@ const deleteLote=async(req,res=response) =>{
     }
 };
 
-module.exports={ crearLote, getLotes, lote, getArchivo, deleteLote }
+const actualizarLote= async(req,res=response)=>{    
+    if(await isAdmin(res,req.uid)){        
+        const loteDB= await Lote.find({uuid:req.body.lote});
+        if(!loteDB){
+            res.json({
+                ok:false
+            })
+        }
+
+        let {...camposL}=loteDB;        
+        camposL=req.body;
+
+        if(req.files && req.files['pdf']){
+            let pathPDF='./files/pdfs/'+loteDB[0].terminos_condiciones;
+            const pdfDB= await PDF.find({pdf:loteDB[0].terminos_condiciones});        
+            
+            const pdf=req.files['pdf']
+            const nombreCortado=pdf.name.split('.');
+            const extensionArchivo=nombreCortado[nombreCortado.length-1];
+            const nombreArchivo= uuidv4()+'.'+extensionArchivo;
+            const path= './files/pdfs/'+nombreArchivo;
+            const datos={ name: nombreCortado[0], pdf: nombreArchivo };
+
+            pdf.mv(path, async (err)=>{
+                if(err){
+                    console.log(err);
+                    return res.status(500).json({
+                        ok:false,
+                        msg:'error en carga de archivo: '+nombreCortado[0],
+                    })
+                }
+                const pdfFile = new PDF(datos)
+                await pdfFile.save();                
+                camposL.terminos_condiciones= pdfFile.pdf;
+                console.log(camposL.terminos_condiciones);
+                if(fs.existsSync(pathPDF)) fs.unlinkSync(pathPDF);
+                await PDF.findByIdAndDelete(pdfDB[0]._id);
+                await Lote.findByIdAndUpdate(loteDB[0]._id, camposL,{new:true}); 
+            })    
+        }
+        if(req.files && req.files['img']) {
+            borrarImagen(req.body.lote);
+            if(req.files['img'].length==undefined){
+                subirImagen(req.files['img'],req.body.lote,res)
+            }else{
+                for (let i = 0; i < req.files['img'].length; i++) {
+                    subirImagen(req.files['img'][i],req.body.lote,res)
+                };
+            }
+        }
+        
+        if(req.files && !req.files['pdf']) await Lote.findByIdAndUpdate(loteDB[0]._id, camposL,{new:true});   
+
+        res.json({
+            ok:true,
+        })
+    }
+}
+
+module.exports={ crearLote, getLotes, lote, getArchivo, deleteLote, actualizarLote }
