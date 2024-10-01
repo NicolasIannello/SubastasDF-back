@@ -1,5 +1,6 @@
 const Imagen = require('../models/imagen');
 const { v4: uuidv4 }=require('uuid');
+const fs=require('fs');
 
 const subirImagen= async(imagen,LoteID,res)=>{
     const img=imagen;
@@ -23,4 +24,16 @@ const subirImagen= async(imagen,LoteID,res)=>{
     })
 }
 
-module.exports={subirImagen};
+const borrarImagen= async(LoteID)=>{
+    const imagenDB= await Imagen.find({lote:LoteID});
+
+    for (let i = 0; i < imagenDB.length; i++) {
+        let pathImg='./files/lotes/'+imagenDB[i].img
+        if(fs.existsSync(pathImg)) fs.unlinkSync(pathImg);
+        await Imagen.findByIdAndDelete(imagenDB[i]._id);
+    }
+
+    return true;
+}
+
+module.exports={subirImagen, borrarImagen };
