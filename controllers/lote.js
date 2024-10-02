@@ -216,7 +216,6 @@ const actualizarLote= async(req,res=response)=>{
                 const pdfFile = new PDF(datos)
                 await pdfFile.save();                
                 camposL.terminos_condiciones= pdfFile.pdf;
-                console.log(camposL.terminos_condiciones);
                 if(fs.existsSync(pathPDF)) fs.unlinkSync(pathPDF);
                 await PDF.findByIdAndDelete(pdfDB[0]._id);
                 await Lote.findByIdAndUpdate(loteDB[0]._id, camposL,{new:true}); 
@@ -241,4 +240,58 @@ const actualizarLote= async(req,res=response)=>{
     }
 }
 
-module.exports={ crearLote, getLotes, lote, getArchivo, deleteLote, actualizarLote }
+const duplicarLote= async(req,res = response) =>{
+    try {
+        if(await isAdmin(res,req.uid)){
+            const loteDB = await Lote.findById(req.body.id);
+            const imgDB = await Imagen.find({lote: loteDB.uuid});
+            const pdfDB = await PDF.find({pdf: loteDB.terminos_condiciones});
+
+            let pathPDF='./files/pdfs/'+loteDB.terminos_condiciones;
+            let pdf=uuidv4();
+            let newFile='./files/pdfs/'+pdf+'.pdf';
+            if(fs.existsSync(pathPDF)) {
+                fs.copyFileSync(pathPDF, newFile)
+                let {_id, ...datosPDF} = pdfDB[0]._doc;            
+                const pdfNew= new PDF(datosPDF);
+                pdfNew.pdf=pdf+'.pdf'
+                await pdfNew.save();
+            }
+
+            let {_id, ...datos} = loteDB._doc;            
+            const lote= new Lote(datos);
+            lote.terminos_condiciones=pdf+'.pdf'
+            lote.disponible=true;
+            lote.uuid=uuidv4();
+            await lote.save();
+
+            for (let i = 0; i < imgDB.length; i++) {
+                let extension = imgDB[i].img.split('.');
+                
+                let pathImg='./files/lotes/'+imgDB[i].img;
+                let imguuid=uuidv4();
+                let newFileImg='./files/lotes/'+imguuid+'.'+extension[1];
+                if(fs.existsSync(pathImg)) {
+                    fs.copyFileSync(pathImg, newFileImg)
+                    const img= new Imagen();
+                    img.lote=lote.uuid;
+                    img.img=imguuid+'.'+extension[1]
+                    await img.save();
+                }
+            }
+            
+            res.json({
+                ok:true,
+            });
+        }
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({
+            ok:false,
+            msg:'error'
+        });
+    }
+};
+
+
+module.exports={ crearLote, getLotes, lote, getArchivo, deleteLote, actualizarLote, duplicarLote }
