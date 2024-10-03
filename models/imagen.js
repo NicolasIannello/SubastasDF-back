@@ -2,7 +2,8 @@ const { Schema, model } = require('mongoose');
 
 const ImagenSchema = Schema({
     lote: { type: String, require:true },
-    img: { type: String, require:true }
+    img: { type: String, require:true },
+    orden: { type: Number, require:true }
 });
 
 ImagenSchema.method('toJSON', function() {

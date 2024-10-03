@@ -33,12 +33,16 @@ const crearLote= async(req,res = response) =>{
                 lote.terminos_condiciones=pdfFile.pdf;
                 lote.uuid=uuidv4();
                 await lote.save();  
-                
+
                 if(req.files['img'].length==undefined){
-                    subirImagen(req.files['img'],lote.uuid,res)
+                    subirImagen(req.files['img'],lote.uuid,1,res)
                 }else{
                     for (let i = 0; i < req.files['img'].length; i++) {
-                        subirImagen(req.files['img'][i],lote.uuid,res)
+                        for (let j = 0; j < req.body.imgOrden.length; j++) {
+                            if(req.body.imgOrden[j]==req.files['img'][i].name){
+                                subirImagen(req.files['img'][i],lote.uuid,(j+1),res)
+                            }
+                        }
                     };
                 }
             })            
@@ -224,13 +228,18 @@ const actualizarLote= async(req,res=response)=>{
         }else{
             flag=true;
         }
+
         if(req.files && req.files['img']) {
             borrarImagen(req.body.lote);
             if(req.files['img'].length==undefined){
-                subirImagen(req.files['img'],req.body.lote,res)
+                subirImagen(req.files['img'],req.body.lote,1,res)
             }else{
                 for (let i = 0; i < req.files['img'].length; i++) {
-                    subirImagen(req.files['img'][i],req.body.lote,res)
+                    for (let j = 0; j < req.body.imgOrden.length; j++) {
+                        if(req.body.imgOrden[j]==req.files['img'][i].name){                            
+                            subirImagen(req.files['img'][i],req.body.lote,(j+1),res)
+                        }
+                    }
                 };
             }
         }
@@ -279,6 +288,7 @@ const duplicarLote= async(req,res = response) =>{
                     const img= new Imagen();
                     img.lote=lote.uuid;
                     img.img=imguuid+'.'+extension[1]
+                    img.orden=imgDB[i].orden
                     await img.save();
                 }
             }
