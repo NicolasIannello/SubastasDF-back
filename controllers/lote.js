@@ -184,6 +184,7 @@ const deleteLote=async(req,res=response) =>{
 
 const actualizarLote= async(req,res=response)=>{    
     if(await isAdmin(res,req.uid)){        
+        let flag=false;
         const loteDB= await Lote.find({uuid:req.body.lote});
         if(!loteDB){
             res.json({
@@ -220,6 +221,8 @@ const actualizarLote= async(req,res=response)=>{
                 await PDF.findByIdAndDelete(pdfDB[0]._id);
                 await Lote.findByIdAndUpdate(loteDB[0]._id, camposL,{new:true}); 
             })    
+        }else{
+            flag=true;
         }
         if(req.files && req.files['img']) {
             borrarImagen(req.body.lote);
@@ -232,7 +235,7 @@ const actualizarLote= async(req,res=response)=>{
             }
         }
         
-        if(req.files && !req.files['pdf']) await Lote.findByIdAndUpdate(loteDB[0]._id, camposL,{new:true});   
+        if(flag) await Lote.findByIdAndUpdate(loteDB[0]._id, camposL,{new:true});   
 
         res.json({
             ok:true,
