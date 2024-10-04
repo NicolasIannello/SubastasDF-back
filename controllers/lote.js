@@ -229,7 +229,35 @@ const actualizarLote= async(req,res=response)=>{
             flag=true;
         }
 
-        if(req.files && req.files['img']) {
+        if(req.body.imgElim){
+            const imagenesElim = await Imagen.find({lote:loteDB[0].uuid}).sort({ orden: 1 }) 
+            let flagElim=0;       
+            for (let i = 0; i < imagenesElim.length; i++) {                
+                if(flagElim>0){
+                    let {...campos}=imagenesElim[i];
+                    campos._doc.orden=campos._doc.orden-flagElim;    
+                    await Imagen.findByIdAndUpdate(imagenesElim[i]._id, campos._doc,{new:true}); 
+                }
+                if(Array.isArray(req.body.imgElim)){
+                    for (let j = 0; j < req.body.imgElim.length; j++) {
+                        if(imagenesElim[i].img==req.body.imgElim[j]){
+                            flagElim++;
+                            let pathImg='./files/lotes/'+imagenesElim[i].img
+                            if(fs.existsSync(pathImg)) fs.unlinkSync(pathImg);
+                            await Imagen.findByIdAndDelete(imagenesElim[i]._id);
+                        }
+                    }
+                }else{                    
+                    if(imagenesElim[i].img==req.body.imgElim){
+                        flagElim++;
+                        let pathImg='./files/lotes/'+imagenesElim[i].img
+                        if(fs.existsSync(pathImg)) fs.unlinkSync(pathImg);
+                        await Imagen.findByIdAndDelete(imagenesElim[i]._id);
+                    }
+                }
+            }
+
+        }else if(req.files && req.files['img']) {
             borrarImagen(req.body.lote);
             if(req.files['img'].length==undefined){
                 subirImagen(req.files['img'],req.body.lote,1,res)
