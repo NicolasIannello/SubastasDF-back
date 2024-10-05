@@ -9,10 +9,11 @@ const router=Router();
 router.post('/crearEvento', [
     check('nombre','el campo es obligatorio').not().isEmpty(),
     check('categoria','el campo es obligatorio').not().isEmpty(),
-    check('fecha_inicio','el campo es obligatorio').isDate(),
-    check('fecha_cierre','el campo es obligatorio').isDate(),
+    check('fecha_inicio','el campo es obligatorio').not().isEmpty(),
+    check('fecha_cierre','el campo es obligatorio').not().isEmpty(),
     check('modalidad','el campo es obligatorio').not().isEmpty(),
     check('publicar_cierre','el campo es obligatorio').not().isEmpty(),
+    check('inicio_automatico','el campo es obligatorio').not().isEmpty(),
     check('token','el campo es obligatorio').not().isEmpty(),
     check('tipo','el campo es obligatorio').not().isEmpty(),
     validarCampos,
