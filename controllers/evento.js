@@ -39,12 +39,7 @@ const getEventos= async(req,res = response) =>{
 
         const [ eventos, total ]= await Promise.all([
             Evento.aggregate([
-                { $project: {
-                    __v: 0,
-                    "categoria": 0,
-                    "modalidad": 0,
-                    "fecha_inicio": 0,
-                } },
+                { $project: { __v: 0, } },
                 sortOperator,
                 { $skip: desde },
                 { $limit: limit },
