@@ -2,6 +2,7 @@ const { response }=require('express');
 const { v4: uuidv4 }=require('uuid');
 const { isAdmin } = require('./admin');
 const Evento = require('../models/evento');
+const EventoLote = require('../models/evento-lote');
 
 const crearEvento= async(req,res = response) =>{
     try {
@@ -43,9 +44,21 @@ const getEventos= async(req,res = response) =>{
                 sortOperator,
                 { $skip: desde },
                 { $limit: limit },
+                { $lookup: {
+                    from: "eventolotes",
+                    localField: "uuid",
+                    foreignField: "uuid_evento",
+                    as: "lotes"
+                } },
+                { $project: {
+                    __v: 0,
+                    "lotes.__v": 0,
+                    "lotes._id": 0,
+                    "lotes.uuid_evento": 0,
+                } },
             ]).collation({locale: 'en'}),
             Evento.countDocuments()
-        ]); 
+        ]);        
         
         res.json({
             ok:true,
@@ -55,5 +68,20 @@ const getEventos= async(req,res = response) =>{
     }
 };
 
+const agregarLotes= async(req,res = response) =>{
+    if(await isAdmin(res,req.uid)){
+        for (let i = 0; i < req.body.lotes.length; i++) {
+            const loteEventoDB = await EventoLote.find({uuid_lote: req.body.lotes[i]})
+            if(loteEventoDB.length==0){
+                const eventoLote = new EventoLote({uuid_lote:req.body.lotes[i], uuid_evento:req.body.evento})
+                eventoLote.save();
+            }
+        }
+        
+        res.json({
+            ok:true,
+        });
+    }
+};
 
-module.exports={ crearEvento, getEventos }
+module.exports={ crearEvento, getEventos, agregarLotes }
