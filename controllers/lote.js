@@ -67,11 +67,14 @@ const getLotes= async(req,res = response) =>{
         const limit= parseInt(req.query.limit) || 20;
         const orden= parseInt(req.query.orden) || 1;
         const order= req.query.order || '_id';
+        const disp= req.query.disp=='true' ? true : {$exists: true};
         var sortOperator = { "$sort": { } };
         sortOperator["$sort"][order] = orden;
+        var matchOperator = { "$match": { "disponible": disp } }
 
         const [ lotes, total ]= await Promise.all([
             Lote.aggregate([
+                matchOperator,
                 { $project: {
                     __v: 0,
                     "descripcion": 0,
