@@ -3,6 +3,7 @@ const { v4: uuidv4 }=require('uuid');
 const { isAdmin } = require('./admin');
 const Evento = require('../models/evento');
 const EventoLote = require('../models/evento-lote');
+const Lote = require('../models/lote');
 
 const crearEvento= async(req,res = response) =>{
     try {
@@ -75,6 +76,10 @@ const agregarLotes= async(req,res = response) =>{
             if(loteEventoDB.length==0){
                 const eventoLote = new EventoLote({uuid_lote:req.body.lotes[i], uuid_evento:req.body.evento})
                 eventoLote.save();
+                const loteDB= await Lote.find({uuid:req.body.lotes[i]});
+                const {...campos}=loteDB[0];
+                campos._doc.disponible=false;
+                await Lote.findByIdAndUpdate(loteDB[0]._id, campos,{new:true}); 
             }
         }
         
