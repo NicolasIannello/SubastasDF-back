@@ -89,4 +89,46 @@ const agregarLotes= async(req,res = response) =>{
     }
 };
 
-module.exports={ crearEvento, getEventos, agregarLotes }
+const quitarLote= async(req,res = response) =>{
+    if(await isAdmin(res,req.uid)){
+        await EventoLote.deleteMany({uuid_lote: { $eq: req.body.lote}})
+        const loteDB= await Lote.find({uuid:req.body.lote});
+        const {...campos}=loteDB[0];
+        campos._doc.disponible=true;
+        await Lote.findByIdAndUpdate(loteDB[0]._id, campos,{new:true}); 
+
+        res.json({
+            ok:true,
+        });
+    }
+};
+
+const getEvento= async(req,res = response) =>{
+    if(await isAdmin(res,req.uid)){
+        var matchOperator = { "$match": { "uuid": req.body.uuid } }
+
+        const evento= await Evento.aggregate([
+            matchOperator,
+            { $project: { __v: 0, } },
+            { $lookup: {
+                from: "eventolotes",
+                localField: "uuid",
+                foreignField: "uuid_evento",
+                as: "lotes"
+            } },
+            { $project: {
+                __v: 0,
+                "lotes.__v": 0,
+                "lotes._id": 0,
+                "lotes.uuid_evento": 0,
+            } },
+        ]).collation({locale: 'en'});
+        
+        res.json({
+            ok:true,
+            evento,
+        });
+    }
+};
+
+module.exports={ crearEvento, getEventos, agregarLotes, quitarLote, getEvento }
