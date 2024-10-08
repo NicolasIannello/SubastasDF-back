@@ -2,7 +2,7 @@ const { Router }=require('express');
 const { check }=require('express-validator');
 const { validarCampos } = require('../middlewares/validar-campos');
 const { validarJWT } = require('../middlewares/validar-jwt');
-const { crearEvento, getEventos, agregarLotes, quitarLote, getEvento } = require('../controllers/evento');
+const { crearEvento, getEventos, agregarLotes, quitarLote, getEvento, actualizarEvento } = require('../controllers/evento');
 
 const router=Router();
 
@@ -51,5 +51,14 @@ router.post('/getEvento', [
     validarCampos,
     validarJWT
 ], getEvento);
+
+router.post('/actualizarEvento', [
+    check('uuid','el campo es obligatorio').not().isEmpty(),
+    check('campos','el campo es obligatorio').not().isEmpty(),
+    check('token','el campo es obligatorio').not().isEmpty(),
+    check('tipo','el campo es obligatorio').not().isEmpty(),
+    validarCampos,
+    validarJWT
+], actualizarEvento);
 
 module.exports=router;

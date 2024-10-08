@@ -131,4 +131,23 @@ const getEvento= async(req,res = response) =>{
     }
 };
 
-module.exports={ crearEvento, getEventos, agregarLotes, quitarLote, getEvento }
+const actualizarEvento= async(req,res=response)=>{    
+    if(await isAdmin(res,req.uid)){        
+        const eventoDB= await Evento.find({uuid:req.body.uuid});
+        if(!eventoDB){
+            res.json({
+                ok:false
+            })
+        }
+        
+        let {...campos}=eventoDB[0];        
+        campos=req.body.campos;
+        await Evento.findByIdAndUpdate(eventoDB[0]._id, campos,{new:true}); 
+        
+        res.json({
+            ok:true,
+        })
+    }
+}
+
+module.exports={ crearEvento, getEventos, agregarLotes, quitarLote, getEvento, actualizarEvento }
