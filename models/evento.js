@@ -9,7 +9,7 @@ const EventoSchema = Schema({
     modalidad: { type: String, required: true },
     publicar_cierre: { type: Boolean, require:true },
     home: { type: Boolean, required: true },
-    inicio: { type: Boolean, required: true },
+    eventos: { type: Boolean, required: true },
     inicio_automatico: { type: Boolean, required: true },
     visitas: { type: Number, required: true },
 });
