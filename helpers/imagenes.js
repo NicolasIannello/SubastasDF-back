@@ -31,11 +31,11 @@ const subirImagen= async(imagen,LoteID,id,res)=>{
     })
 }
 
-const borrarImagen= async(LoteID)=>{
+const borrarImagen= async(LoteID,folder)=>{
     const imagenDB= await Imagen.find({lote:LoteID});
 
     for (let i = 0; i < imagenDB.length; i++) {
-        let pathImg='./files/lotes/'+imagenDB[i].img
+        let pathImg='./files/'+folder+'/'+imagenDB[i].img
         if(fs.existsSync(pathImg)) fs.unlinkSync(pathImg);
         await Imagen.findByIdAndDelete(imagenDB[i]._id);
     }
