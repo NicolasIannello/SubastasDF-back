@@ -2,9 +2,12 @@ const { Router }=require('express');
 const { check }=require('express-validator');
 const { validarCampos } = require('../middlewares/validar-campos');
 const { validarJWT } = require('../middlewares/validar-jwt');
-const { crearEvento, getEventos, agregarLotes, quitarLote, getEvento, actualizarEvento } = require('../controllers/evento');
+const { crearEvento, getEventos, agregarLotes, quitarLote, getEvento, actualizarEvento, imgEvento } = require('../controllers/evento');
+const expressFileUpload =require('express-fileupload');
 
 const router=Router();
+
+router.use(expressFileUpload());
 
 router.post('/crearEvento', [
     check('nombre','el campo es obligatorio').not().isEmpty(),
@@ -45,7 +48,7 @@ router.post('/quitarLote', [
 ], quitarLote);
 
 router.post('/getEvento', [
-    check('uuid','el campo es obligatorio').not().isEmpty(),
+    check('dato','el campo es obligatorio').not().isEmpty(),
     check('token','el campo es obligatorio').not().isEmpty(),
     check('tipo','el campo es obligatorio').not().isEmpty(),
     validarCampos,
@@ -60,5 +63,13 @@ router.post('/actualizarEvento', [
     validarCampos,
     validarJWT
 ], actualizarEvento);
+
+router.post('/img', [
+    check('uuid','el campo es obligatorio').not().isEmpty(),
+    check('token','el campo es obligatorio').not().isEmpty(),
+    check('tipo','el campo es obligatorio').not().isEmpty(),
+    validarCampos,
+    validarJWT
+], imgEvento);
 
 module.exports=router;
