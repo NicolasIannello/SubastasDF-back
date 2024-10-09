@@ -145,6 +145,10 @@ const getArchivo= async(req,res = response) =>{
             pathImg=pathImg= path.join( __dirname, '../files/pdfs/'+PDFDB.pdf);
         }
     }
+    if(tipo=='evento') {
+        const imagenesDB= await Imagen.find({img});        
+        pathImg=pathImg= path.join( __dirname, '../files/eventos/'+imagenesDB[0].img);        
+    }
 
     if(fs.existsSync(pathImg)){
         res.sendFile(pathImg);
@@ -261,7 +265,7 @@ const actualizarLote= async(req,res=response)=>{
             }
 
         }else if(req.files && req.files['img']) {
-            borrarImagen(req.body.lote);
+            borrarImagen(req.body.lote,'lotes');
             if(req.files['img'].length==undefined){
                 subirImagen(req.files['img'],req.body.lote,1,res)
             }else{
