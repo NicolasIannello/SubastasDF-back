@@ -380,4 +380,16 @@ const isAdmin = async(res,id)=>{
     return true;
 }
 
-module.exports={ login, renewToken, getUsers, deleteUser, actualizarUser, crearAdmin, buscarDato, excelUsuarios, getAdmins, isAdmin }
+const isAdmin2 = async(id)=>{
+    const adminDB= await Admin.findById(id)
+    if(!adminDB){
+        const userDB = await Usuario.findById(id)        
+        if(!userDB.validado || !userDB.habilitado){
+            return 3
+        }
+        return 2;
+    }
+    return 1;
+}
+
+module.exports={ login, renewToken, getUsers, deleteUser, actualizarUser, crearAdmin, buscarDato, excelUsuarios, getAdmins, isAdmin, isAdmin2 }
