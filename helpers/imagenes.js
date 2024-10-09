@@ -7,8 +7,15 @@ const subirImagen= async(imagen,LoteID,id,res)=>{
     const nombreCortado=img.name.split('.');
     const extensionArchivo=nombreCortado[nombreCortado.length-1];
     const nombreArchivo= uuidv4()+'.'+extensionArchivo;
-    const path= './files/lotes/'+nombreArchivo;
-    const datos={ lote: LoteID, img: nombreArchivo, orden:id };
+    let path;
+    let datos;
+    if(id==-1){
+        path= './files/eventos/'+nombreArchivo;
+        datos={ lote: LoteID, img: nombreArchivo, orden:1 };
+    }else{
+        path= './files/lotes/'+nombreArchivo;
+        datos={ lote: LoteID, img: nombreArchivo, orden:id };    
+    }
 
     img.mv(path, async (err)=>{
         if(err){
