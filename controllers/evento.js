@@ -4,7 +4,7 @@ const { isAdmin, isAdmin2 } = require('./admin');
 const Evento = require('../models/evento');
 const EventoLote = require('../models/evento-lote');
 const Lote = require('../models/lote');
-const { subirImagen } = require('../helpers/imagenes');
+const { subirImagen, borrarImagen } = require('../helpers/imagenes');
 
 const crearEvento= async(req,res = response) =>{
     try {
@@ -59,6 +59,14 @@ const getEventos= async(req,res = response) =>{
                     "lotes._id": 0,
                     "lotes.uuid_evento": 0,
                 } },
+                { $lookup: {
+                    from: "imagens",
+                    localField: "uuid",
+                    foreignField: "lote",
+                    as: "img"
+                } },
+                {$unwind: { path: "$img", preserveNullAndEmptyArrays: true }},
+                { $project: { __v: 0, "img.orden": 0, "img._id": 0, "img.lote": 0, } },    
             ]).collation({locale: 'en'}),
             Evento.countDocuments()
         ]);        
@@ -168,6 +176,9 @@ const actualizarEvento= async(req,res=response)=>{
 const imgEvento= async(req,res = response) =>{
     try {
         if(await isAdmin(res,req.uid)){
+            if(req.body.caso=='edit'){
+                await borrarImagen(req.body.uuid,'eventos')
+            }
             subirImagen(req.files['img'],req.body.uuid,-1,res)
             
             res.json({
