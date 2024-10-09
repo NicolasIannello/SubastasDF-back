@@ -1,9 +1,10 @@
 const { response }=require('express');
 const { v4: uuidv4 }=require('uuid');
-const { isAdmin } = require('./admin');
+const { isAdmin, isAdmin2 } = require('./admin');
 const Evento = require('../models/evento');
 const EventoLote = require('../models/evento-lote');
 const Lote = require('../models/lote');
+const { subirImagen } = require('../helpers/imagenes');
 
 const crearEvento= async(req,res = response) =>{
     try {
@@ -18,6 +19,7 @@ const crearEvento= async(req,res = response) =>{
 
             res.json({
                 ok:true,
+                uuid:evento.uuid
             });
             
         }
@@ -104,12 +106,25 @@ const quitarLote= async(req,res = response) =>{
 };
 
 const getEvento= async(req,res = response) =>{
-    if(await isAdmin(res,req.uid)){
-        var matchOperator = { "$match": { "uuid": req.body.uuid } }
-
+        var matchOperator = { "$match": { } }        
+        switch (await isAdmin2(req.uid)) {
+            case 1:
+                matchOperator['$match']['uuid'] = req.body.dato
+                break;
+            case 2:
+                matchOperator['$match'][req.body.dato] = true
+                break;
+            case 3:
+                res.json({
+                    ok:false,
+                    t:3
+                });
+                return;
+        }
+        
         const evento= await Evento.aggregate([
             matchOperator,
-            { $project: { __v: 0, } },
+            { $project: { __v: 0, '_id': 0 } },
             { $lookup: {
                 from: "eventolotes",
                 localField: "uuid",
@@ -127,8 +142,8 @@ const getEvento= async(req,res = response) =>{
         res.json({
             ok:true,
             evento,
+            t:1
         });
-    }
 };
 
 const actualizarEvento= async(req,res=response)=>{    
@@ -150,4 +165,23 @@ const actualizarEvento= async(req,res=response)=>{
     }
 }
 
-module.exports={ crearEvento, getEventos, agregarLotes, quitarLote, getEvento, actualizarEvento }
+const imgEvento= async(req,res = response) =>{
+    try {
+        if(await isAdmin(res,req.uid)){
+            subirImagen(req.files['img'],req.body.uuid,-1,res)
+            
+            res.json({
+                ok:true,
+            });
+            
+        }
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({
+            ok:false,
+            msg:'error'
+        });
+    }
+};
+
+module.exports={ crearEvento, getEventos, agregarLotes, quitarLote, getEvento, actualizarEvento, imgEvento }
