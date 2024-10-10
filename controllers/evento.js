@@ -145,6 +145,14 @@ const getEvento= async(req,res = response) =>{
                 "lotes._id": 0,
                 "lotes.uuid_evento": 0,
             } },
+            { $lookup: {
+                from: "imagens",
+                localField: "uuid",
+                foreignField: "lote",
+                as: "img"
+            } },
+            {$unwind: { path: "$img", preserveNullAndEmptyArrays: true }},
+            { $project: { __v: 0, "img.orden": 0, "img._id": 0, "img.lote": 0, } },    
         ]).collation({locale: 'en'});
         
         res.json({
