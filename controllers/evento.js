@@ -5,6 +5,8 @@ const Evento = require('../models/evento');
 const EventoLote = require('../models/evento-lote');
 const Lote = require('../models/lote');
 const { subirImagen, borrarImagen } = require('../helpers/imagenes');
+const Imagen = require('../models/imagen');
+const fs=require('fs');
 
 const crearEvento= async(req,res = response) =>{
     try {
@@ -203,4 +205,44 @@ const imgEvento= async(req,res = response) =>{
     }
 };
 
-module.exports={ crearEvento, getEventos, agregarLotes, quitarLote, getEvento, actualizarEvento, imgEvento }
+const eliminarEvento=async(req,res=response) =>{
+    const uuid=req.body.uuid;
+    try {        
+        if(await isAdmin(res,req.uid)){
+            const eventoDB = await Evento.find({uuid})
+            const imgDB = await Imagen.find({lote:uuid})
+            const evloDB = await EventoLote.find({uuid_evento:uuid})
+
+            if(evloDB.length!=0){
+                for (let i = 0; i < evloDB.length; i++) {
+                    const loteDB= await Lote.find({uuid:evloDB[i].uuid_lote});
+                    const {...campos}=loteDB[0];
+                    campos._doc.disponible=true;
+                    await Lote.findByIdAndUpdate(loteDB[0]._id, campos,{new:true}); 
+                }
+            }
+            await EventoLote.deleteMany({uuid_evento: { $eq: uuid}})
+            if(imgDB.length!=0){
+                for (let i = 0; i < imgDB.length; i++) {
+                    let pathImg='./files/eventos/'+imgDB[i].img
+                    if(fs.existsSync(pathImg)) fs.unlinkSync(pathImg);
+                    await Imagen.findByIdAndDelete(imgDB[i]._id);
+                }
+            }
+            await Evento.findByIdAndDelete(eventoDB[0]._id);
+
+            res.json({
+                ok:true,
+            })
+        }
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({
+            ok:false,
+            msg:'error borrar'
+        });
+    }
+};
+
+
+module.exports={ crearEvento, getEventos, agregarLotes, quitarLote, getEvento, actualizarEvento, imgEvento, eliminarEvento }
