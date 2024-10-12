@@ -15,6 +15,7 @@ router.post('/crearLote', [
     check('moneda','el campo es obligatorio').not().isEmpty(),
     check('precio_base','el campo es obligatorio').not().isEmpty(),
     check('incremento','el campo es obligatorio').not().isEmpty(),
+    check('base_salida','el campo es obligatorio').not().isEmpty(),
     check('token','el campo es obligatorio').not().isEmpty(),
     check('tipo','el campo es obligatorio').not().isEmpty(),
     validarCampos,
