@@ -36,11 +36,12 @@ const tracking = async() =>{
         ]);
 
         for (let i = 0; i < eventoDB.length; i++) {
-            console.log(eventoDB[i].hora_inicio+" "+(eventoDB[i].hora_inicio<hora && eventoDB[i].estado==0 && eventoDB[i].inicio_automatico)+" "+hora);
+            //console.log(eventoDB[i].hora_inicio+" "+(eventoDB[i].hora_inicio<hora && eventoDB[i].estado==0 && eventoDB[i].inicio_automatico)+" "+hora);
             if(eventoDB[i].hora_inicio<=hora && eventoDB[i].estado==0 && eventoDB[i].inicio_automatico){
                 let {...campos}=eventoDB[i];        
                 campos.estado=1;
                 await Evento.findByIdAndUpdate(eventoDB[i]._id, campos,{new:true});         
+                console.log('Abriendo evento: '+eventoDB[i]._id);
             }        
         }
 
@@ -51,11 +52,12 @@ const tracking = async() =>{
         ]);
 
         for (let i = 0; i < eventoDB2.length; i++) {
-            console.log(eventoDB2[i].hora_cierre+" "+(eventoDB2[i].hora_cierre<hora && eventoDB2[i].estado==1)+" "+hora);
+            //console.log(eventoDB2[i].hora_cierre+" "+(eventoDB2[i].hora_cierre<hora && eventoDB2[i].estado==1)+" "+hora);
             if(eventoDB2[i].hora_cierre<=hora && eventoDB2[i].estado==1){
                 let {...campos}=eventoDB2[i];        
                 campos.estado=2;
                 await Evento.findByIdAndUpdate(eventoDB2[i]._id, campos,{new:true});         
+                console.log('Cerrando evento: '+eventoDB2[i]._id);
             }        
         }
     }
