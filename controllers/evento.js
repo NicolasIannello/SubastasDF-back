@@ -16,6 +16,7 @@ const crearEvento= async(req,res = response) =>{
             evento.home=false;
             evento.eventos=false;
             evento.visitas=0;
+            evento.activo=false;
             evento.uuid=uuidv4();
             await evento.save();  
 
