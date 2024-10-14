@@ -32,14 +32,30 @@ const tracking = async() =>{
         const eventoDB = await Evento.aggregate([
             { $project: { __v: 0, } },
             { "$match": {"fecha_inicio" : { $lte : fecha }} },
+            { "$match": {"estado" : { $eq : 0 }} },
         ]);
 
         for (let i = 0; i < eventoDB.length; i++) {
-            console.log(eventoDB[i].hora_inicio+" "+(eventoDB[i].hora_inicio<hora && !eventoDB[i].activo && eventoDB[i].inicio_automatico)+" "+hora);
-            if(eventoDB[i].hora_inicio<=hora && !eventoDB[i].activo && eventoDB[i].inicio_automatico){
+            console.log(eventoDB[i].hora_inicio+" "+(eventoDB[i].hora_inicio<hora && eventoDB[i].estado==0 && eventoDB[i].inicio_automatico)+" "+hora);
+            if(eventoDB[i].hora_inicio<=hora && eventoDB[i].estado==0 && eventoDB[i].inicio_automatico){
                 let {...campos}=eventoDB[i];        
-                campos.activo=true;
+                campos.estado=1;
                 await Evento.findByIdAndUpdate(eventoDB[i]._id, campos,{new:true});         
+            }        
+        }
+
+        const eventoDB2 = await Evento.aggregate([
+            { $project: { __v: 0, } },
+            { "$match": {"fecha_cierre" : { $lte : fecha }} },
+            { "$match": {"estado" : { $eq : 1 }} },
+        ]);
+
+        for (let i = 0; i < eventoDB2.length; i++) {
+            console.log(eventoDB2[i].hora_cierre+" "+(eventoDB2[i].hora_cierre<hora && eventoDB2[i].estado==1)+" "+hora);
+            if(eventoDB2[i].hora_cierre<=hora && eventoDB2[i].estado==1){
+                let {...campos}=eventoDB2[i];        
+                campos.estado=2;
+                await Evento.findByIdAndUpdate(eventoDB2[i]._id, campos,{new:true});         
             }        
         }
     }
