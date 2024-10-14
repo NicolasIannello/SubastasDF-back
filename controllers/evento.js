@@ -123,7 +123,11 @@ const getEvento= async(req,res = response) =>{
                 matchOperator['$match']['uuid'] = req.body.dato
                 break;
             case 2:
-                matchOperator['$match'][req.body.dato] = true
+                if(req.body.flag){
+                    matchOperator['$match'][req.body.dato] = true
+                }else{
+                    matchOperator['$match']['uuid'] = req.body.dato
+                }
                 break;
             case 3:
                 res.json({
