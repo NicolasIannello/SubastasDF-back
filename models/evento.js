@@ -19,7 +19,7 @@ const EventoSchema = Schema({
     mostrar_ganadores: { type: Boolean, required: true },
     mostrar_ofertas: { type: Boolean, required: true },
     grupo: { type: String, required: true },
-    activo: { type: Boolean, required: true },
+    estado: { type: Number, required: true },
 });
 
 EventoSchema.method('toJSON', function() {
