@@ -97,7 +97,7 @@ const getLotes= async(req,res = response) =>{
 };
 
 const lote= async(req,res = response) =>{    
-    if(await isAdmin(res,req.uid)){
+    //if(await isAdmin(res,req.uid)){
         const lote = await Lote.aggregate([
             { "$match": { uuid:req.body.uuid } },
             { $project: { __v: 0, '_id':0 } },
@@ -122,7 +122,7 @@ const lote= async(req,res = response) =>{
             ok:true,
             lote
         });
-    }
+    //}
 };
 
 const getArchivo= async(req,res = response) =>{
