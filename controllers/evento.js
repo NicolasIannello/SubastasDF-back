@@ -165,7 +165,7 @@ const getEvento= async(req,res = response) =>{
         if(evento.length!=0 && evento[0].estado!=1 && await isAdmin2(req.uid)==2 && !req.body.flag){
             res.json({
                 ok:false,
-                t:3
+                t: evento[0].estado==0 ? 4 : 5 
             });
             return;
         }
@@ -173,7 +173,7 @@ const getEvento= async(req,res = response) =>{
         res.json({
             ok:true,
             evento,
-            t:1
+            t:0
         });
 };
 
