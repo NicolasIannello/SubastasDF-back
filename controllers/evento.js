@@ -162,7 +162,7 @@ const getEvento= async(req,res = response) =>{
             { $project: { __v: 0, "img.orden": 0, "img._id": 0, "img.lote": 0, } },    
         ]).collation({locale: 'en'});
         
-        if(evento[0].estado!=1 && await isAdmin2(req.uid)==2 && !req.body.flag){
+        if(evento.length!=0 && evento[0].estado!=1 && await isAdmin2(req.uid)==2 && !req.body.flag){
             res.json({
                 ok:false,
                 t:3
