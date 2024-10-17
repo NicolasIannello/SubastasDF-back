@@ -113,6 +113,7 @@ const lote= async(req,res = response) =>{
                 from: "imagens",
                 localField: "uuid",
                 foreignField: "lote",
+                "pipeline": [ { "$sort" : { "orden" : 1 } } ],
                 as: "img"
             } },
             { $project: { __v: 0, "img.__v": 0, "img._id": 0, "img.lote": 0, } },
