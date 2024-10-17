@@ -3,10 +3,12 @@ const Lote = require('../models/lote');
 const PDF = require('../models/pdf');
 const fs=require('fs');
 const { v4: uuidv4 }=require('uuid');
-const { isAdmin } = require('./admin');
+const { isAdmin, isAdmin2 } = require('./admin');
 const Imagen = require('../models/imagen');
 const path=require('path');
-const { subirImagen, borrarImagen, subirPDF } = require('../helpers/imagenes');
+const { subirImagen, borrarImagen } = require('../helpers/imagenes');
+const eventoLote = require('../models/evento-lote');
+const evento = require('../models/evento');
 
 const crearLote= async(req,res = response) =>{
     try {
@@ -118,6 +120,24 @@ const lote= async(req,res = response) =>{
             } },
             { $project: { __v: 0, "img.__v": 0, "img._id": 0, "img.lote": 0, } },
         ]).collation({locale: 'en'})
+
+        if(await isAdmin2(req.uid)==2){
+            const flag = await eventoLote.find({uuid_lote:lote[0].uuid})
+            if(flag){
+                const flag2 = await evento.find({uuid: flag[0].uuid_evento})
+                if(!flag2 || flag2[0].estado!=1){
+                    res.json({
+                        ok:false,
+                    });
+                    return;
+                }
+            }else{
+                res.json({
+                    ok:false,
+                });
+                return;
+            }
+        }
 
         res.json({
             ok:true,
