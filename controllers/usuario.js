@@ -317,4 +317,4 @@ const cambiarPass= async(req,res=response)=>{
     }
 }
 
-module.exports={ crearUsuario, login, renewToken, validarCuenta, cambiarPass, sendCambio, mailContacto }
+module.exports={ crearUsuario, login, renewToken, validarCuenta, cambiarPass, sendCambio, mailContacto, timeNow }
