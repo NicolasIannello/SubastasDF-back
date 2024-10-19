@@ -16,6 +16,7 @@ app.use('/subasta/admin', require('./routes/admins'));
 app.use('/subasta/web', require('./routes/webs'));
 app.use('/subasta/lote', require('./routes/lotes'));
 app.use('/subasta/evento', require('./routes/eventos'));
+app.use('/subasta/oferta', require('./routes/ofertas'));
 
 app.listen( process.env.PORT, () =>{
     console.log('Iniciando');
