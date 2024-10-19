@@ -5,6 +5,66 @@ const Evento = require('../models/evento');
 const Oferta = require('../models/oferta');
 const EventoLote = require('../models/evento-lote');
 const Usuario = require('../models/usuario');
+const OfertaAuto = require('../models/oferta-auto');
+
+const setOfertaA= async(req,res = response) =>{
+    try {
+        if(await isAdmin2(req.uid)==2){
+            const userDB = await Usuario.findById(req.uid);
+            if(userDB){
+                const {evento, lote, cantidad} = req.body
+                const oferta_autoDB = await OfertaAuto.find({mail:userDB.mail,uuid_evento:evento,uuid_lote:lote});
+                if(oferta_autoDB[0]){
+                    let {...campos}=oferta_autoDB[0];        
+                    campos._doc.cantidad=cantidad;                    
+                    await OfertaAuto.findByIdAndUpdate(oferta_autoDB[0]._id, campos,{new:true});  
+                }else{
+                    const oferta_auto= new OfertaAuto({mail:userDB.mail,uuid_evento:evento,uuid_lote:lote,cantidad:cantidad});
+                    await oferta_auto.save();
+                }
+            }
+        }
+
+        res.json({
+            ok:true,
+        });
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({
+            ok:false,
+            msg:'error'
+        });
+    }
+}
+
+const getOfertaA= async(req,res = response) =>{
+    try {
+        if(await isAdmin2(req.uid)==2){
+            const userDB = await Usuario.findById(req.uid);
+            if(userDB){
+                const {evento, lote} = req.body
+                const oferta_autoDB = await OfertaAuto.find({mail:userDB.mail,uuid_evento:evento,uuid_lote:lote});
+                
+                if(oferta_autoDB[0]){
+                    res.json({
+                        ok:true,
+                        cantidad: oferta_autoDB[0].cantidad
+                    });
+                }else{
+                    res.json({
+                        ok:false,
+                    });
+                }
+            }    
+        }
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({
+            ok:false,
+            msg:'error'
+        });
+    }
+}
 
 const getDatos= async(req,res = response) =>{
     try {
@@ -95,4 +155,4 @@ const ofertar= async(req,res = response) =>{
     }
 };
 
-module.exports={ ofertar, getDatos }
+module.exports={ ofertar, getDatos, setOfertaA, getOfertaA }
