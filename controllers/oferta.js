@@ -37,6 +37,37 @@ const setOfertaA= async(req,res = response) =>{
     }
 }
 
+const eliminarOfertaA= async(req,res = response) =>{
+    try {
+        if(await isAdmin2(req.uid)==2){
+            const userDB = await Usuario.findById(req.uid);
+            if(userDB){
+                const {evento, lote} = req.body
+                const oferta_autoDB = await OfertaAuto.find({mail:userDB.mail,uuid_evento:evento,uuid_lote:lote});
+                if(oferta_autoDB[0]){
+                    await OfertaAuto.deleteMany({mail:userDB.mail,uuid_evento:evento,uuid_lote:lote})  
+                }else{
+                    res.json({
+                        ok:false,
+                        msg: 'No se encontro una oferta automatica para eliminar'
+                    });
+                    return;
+                }
+            }
+        }
+
+        res.json({
+            ok:true,
+        });
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({
+            ok:false,
+            msg:'error'
+        });
+    }
+}
+
 const getOfertaA= async(req,res = response) =>{
     try {
         if(await isAdmin2(req.uid)==2){
@@ -155,4 +186,4 @@ const ofertar= async(req,res = response) =>{
     }
 };
 
-module.exports={ ofertar, getDatos, setOfertaA, getOfertaA }
+module.exports={ ofertar, getDatos, setOfertaA, getOfertaA, eliminarOfertaA }
