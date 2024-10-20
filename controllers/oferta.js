@@ -6,6 +6,32 @@ const Oferta = require('../models/oferta');
 const EventoLote = require('../models/evento-lote');
 const Usuario = require('../models/usuario');
 const OfertaAuto = require('../models/oferta-auto');
+const Lote = require('../models/lote');
+
+const checkOfertaA= async(lote,evento) =>{
+    try {
+        const ofertaDB = await Oferta.find({uuid_evento: evento, uuid_lote: lote}).sort({cantidad:-1});
+        const ofertaAutoDB = await OfertaAuto.find({uuid_evento: evento, uuid_lote: lote}).sort({cantidad:-1}).limit(2);
+        const loteDB = await Lote.find({uuid:lote});
+        
+        if(ofertaDB[0].mail!=ofertaAutoDB[0].mail){
+            if(ofertaAutoDB.length==1 && ofertaDB[0].cantidad+ +loteDB[0].incremento<=ofertaAutoDB[0].cantidad){
+                const oferta= new Oferta({mail: ofertaAutoDB[0].mail,cantidad: ofertaDB[0].cantidad+ +loteDB[0].incremento,uuid_evento: evento,uuid_lote: lote})
+                oferta.fecha=timeNow();
+                oferta.tipo='automatica';
+                await oferta.save();
+            }else if(ofertaAutoDB.length==2 && ofertaAutoDB[1].cantidad+ +loteDB[0].incremento<=ofertaAutoDB[0].cantidad){
+                const oferta= new Oferta({mail: ofertaAutoDB[0].mail,cantidad: ofertaAutoDB[1].cantidad+ +loteDB[0].incremento,uuid_evento: evento,uuid_lote: lote})
+                oferta.fecha=timeNow();
+                oferta.tipo='automatica';
+                await oferta.save();
+            }
+        }
+
+    } catch (error) {
+        console.log(error);
+    }
+}
 
 const setOfertaA= async(req,res = response) =>{
     try {
@@ -22,6 +48,7 @@ const setOfertaA= async(req,res = response) =>{
                     const oferta_auto= new OfertaAuto({mail:userDB.mail,uuid_evento:evento,uuid_lote:lote,cantidad:cantidad});
                     await oferta_auto.save();
                 }
+                checkOfertaA(lote,evento);
             }
         }
 
@@ -145,11 +172,13 @@ const ofertar= async(req,res = response) =>{
                     const userDB = await Usuario.findById(req.uid);
                     if(userDB){
                         const ofertaDB = await Oferta.find({uuid_evento: evento, uuid_lote: lote}).sort({cantidad:-1}).limit(1);
-                        if(cantidad>ofertaDB[0].cantidad){
+                        if(!ofertaDB[0] || cantidad>ofertaDB[0].cantidad){
                             const oferta= new Oferta({mail: userDB.mail,cantidad: cantidad,uuid_evento: evento,uuid_lote: lote})
                             oferta.fecha=timeNow();
                             oferta.tipo='manual';
                             await oferta.save();
+                            
+                            checkOfertaA(lote,evento);
 
                             res.json({
                                 ok:true,
