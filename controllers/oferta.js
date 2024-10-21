@@ -126,7 +126,50 @@ const getOfertaA= async(req,res = response) =>{
 
 const getDatos= async(req,res = response) =>{
     try {
-        if(await isAdmin2(req.uid)!=3){
+        const flag = await isAdmin2(req.uid);
+        if(flag==1){
+            const lote = req.body.lote
+            const ofertaDB = await Oferta.aggregate([
+                { "$match": { uuid_lote: lote } },
+                { $project: { __v: 0, "__v": 0,} },
+                { $lookup: {
+                    from: "eventos",
+                    localField: "uuid_evento",
+                    foreignField: "uuid",
+                    as: "evento"
+                } },
+                {$unwind: { path: "$evento", preserveNullAndEmptyArrays: true }},
+                { $project: {
+                    __v: 0,
+                    "evento._id": 0,
+                    "evento.__v": 0,
+                    "evento.categoria":0,
+                    "evento.fecha_inicio":0,
+                    //"evento.fecha_cierre":0,
+                    "evento.hora_inicio":0,
+                    //"evento.hora_cierre":0,
+                    "evento.segundos_cierre":0,
+                    "evento.modalidad":0,
+                    "evento.publicar_cierre":0,
+                    "evento.inicio_automatico":0,
+                    "evento.mostrar_precio":0,
+                    "evento.mostrar_ganadores":0,
+                    "evento.mostrar_ofertas":0,
+                    "evento.grupo":0,
+                    "evento.home":0,
+                    "evento.eventos":0,
+                    "evento.visitas":0,
+                    //"evento.estado":0,
+                    "evento.uuid":0,
+                } },
+                { "$sort": { cantidad: -1 } },
+            ]);
+            res.json({
+                ok:true,
+                ofertaDB
+            });
+            return;
+        }else if(flag!=3){
             const {evento, lote} = req.body
             const eventoDB = await Evento.find({uuid: evento});
             let cantidad=null;
