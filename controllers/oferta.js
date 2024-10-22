@@ -8,13 +8,51 @@ const Usuario = require('../models/usuario');
 const OfertaAuto = require('../models/oferta-auto');
 const Lote = require('../models/lote');
 
+const checkCierre= async(evento) =>{
+    try {
+        const eventoDB = await Evento.find({uuid: evento});
+        let dateFin= new Date(Date.parse(eventoDB[0].fecha_cierre+' '+eventoDB[0].hora_cierre));
+        let dateHoy= new Date();
+
+        const milliDiff = (dateHoy.getTime()- dateFin.getTime())*-1;
+        const totalSeconds = Math.floor(milliDiff / 1000);
+        const totalMinutes = Math.floor(totalSeconds / 60);
+        const totalHours = Math.floor(totalMinutes / 60);
+
+        let totalDays = Math.floor(totalHours / 24);    
+        let remMinutes = totalMinutes % 60;
+        let remHours = totalHours % 24;
+
+        if(totalDays==0 && remHours==0 && remMinutes<=4){
+            dateFin.setMinutes(dateFin.getMinutes() + eventoDB[0].segundos_cierre/60)
+            fecha_nueva=new Date(dateFin).toLocaleString("en-US", {timeZone: "America/Argentina/Buenos_Aires"}).split("/")                        
+            hora_nueva=fecha_nueva[2].slice(6,14)
+            fecha_nueva[2].slice(0,4)
+            hora_nueva2 = hora_nueva.split(":")
+            if(fecha_nueva[2][15]=='P'){
+                hora_nueva=(parseInt(hora_nueva2[0])+12)+":"+hora_nueva2[1]
+            }else{
+                hora_nueva=(hora_nueva2[0]=='12'?"00":hora_nueva2[0])+":"+hora_nueva2[1];
+            }
+
+            let {...campos}=eventoDB[0];        
+            campos._doc.hora_cierre=hora_nueva;
+            campos._doc.fecha_cierre=fecha_nueva[2].slice(0,4)+'-'+fecha_nueva[0]+'-'+fecha_nueva[1];    
+                            
+            await Evento.findByIdAndUpdate(eventoDB[0]._id, campos,{new:true});  
+        }
+    } catch (error) {
+        console.log(error);
+    }
+}
+
 const checkOfertaA= async(lote,evento) =>{
     try {
-        const ofertaDB = await Oferta.find({uuid_evento: evento, uuid_lote: lote}).sort({cantidad:-1});
+        const ofertaDB = await Oferta.find({uuid_evento: evento, uuid_lote: lote}).sort({cantidad:-1}).limit(1);
         const ofertaAutoDB = await OfertaAuto.find({uuid_evento: evento, uuid_lote: lote}).sort({cantidad:-1}).limit(2);
         const loteDB = await Lote.find({uuid:lote});
         
-        if(ofertaDB[0].mail!=ofertaAutoDB[0].mail){
+        if(ofertaAutoDB.length>0 && ofertaDB[0].mail!=ofertaAutoDB[0].mail){
             if(ofertaAutoDB.length==1 && ofertaDB[0].cantidad+ +loteDB[0].incremento<=ofertaAutoDB[0].cantidad){
                 const oferta= new Oferta({mail: ofertaAutoDB[0].mail,cantidad: ofertaDB[0].cantidad+ +loteDB[0].incremento,uuid_evento: evento,uuid_lote: lote})
                 oferta.fecha=timeNow();
@@ -27,7 +65,7 @@ const checkOfertaA= async(lote,evento) =>{
                 await oferta.save();
             }
         }
-
+        checkCierre(evento)
     } catch (error) {
         console.log(error);
     }
