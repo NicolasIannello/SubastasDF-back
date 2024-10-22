@@ -146,7 +146,7 @@ const deleteUser=async(req,res=response) =>{
 }
 
 const actualizarUser= async(req,res=response)=>{    
-    const {id, campos, nuevaPass} = req.body;
+    let {id, campos, nuevaPass} = req.body;
     const adminDB= await Admin.findById(req.uid);    
 
     if(!adminDB && req.body.id!=req.uid){
@@ -161,6 +161,10 @@ const actualizarUser= async(req,res=response)=>{
                 ok:false
             })
         }
+
+        let  {tipo, habilitado, mail, ...campos2} = campos
+        if(!adminDB) campos=campos2;
+        
         const {...camposU}=usuarioDB;
         camposU._doc=campos;
         if(nuevaPass && nuevaPass!=''){
@@ -169,14 +173,14 @@ const actualizarUser= async(req,res=response)=>{
         }
         
         if(empresaDB[0]){
-            if(campos.tipo=='emp'){
+            if((tipo=='emp' && adminDB) || (usuarioDB.tipo=='emp' && !adminDB)){
                 const {...camposE}=empresaDB[0];
                 camposE._doc=campos;
                 await Empresa.findByIdAndUpdate(empresaDB[0]._id, camposE,{new:true});       
-            }else{
+            }else if(adminDB){
                 await Empresa.findByIdAndDelete(empresaDB[0]._id);
             }
-        }else if(campos.tipo=='emp'){
+        }else if(tipo=='emp' && adminDB){
             const empresa= new Empresa(campos);
             await empresa.save();
         }
