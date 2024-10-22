@@ -317,4 +317,36 @@ const cambiarPass= async(req,res=response)=>{
     }
 }
 
-module.exports={ crearUsuario, login, renewToken, validarCuenta, cambiarPass, sendCambio, mailContacto, timeNow }
+const getDatos= async(req,res=response)=>{
+    const userDB = await Usuario.findById(req.uid);
+
+    const userDatos=await Usuario.aggregate([
+        { "$match": { mail:userDB.mail } },
+        { $project: {
+            __v: 0,
+            "__v": 0,
+            "pass": 0,
+            "grupo": 0,
+        } },
+        { $lookup: {
+            from: "empresas",
+            localField: "mail",
+            foreignField: "mail",
+            as: "dato_empresa"
+        } },
+        {$unwind: { path: "$dato_empresa", preserveNullAndEmptyArrays: true }},
+        { $project: {
+            __v: 0,
+            "dato_empresa.__v": 0,
+            "dato_empresa.mail": 0,
+            "dato_empresa._id": 0,
+        } },
+    ]).collation({locale: 'en'});
+
+    res.json({
+        ok:true,
+        userDatos
+    })
+}
+
+module.exports={ crearUsuario, login, renewToken, validarCuenta, cambiarPass, sendCambio, mailContacto, timeNow, getDatos }

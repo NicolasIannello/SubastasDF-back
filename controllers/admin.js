@@ -149,7 +149,7 @@ const actualizarUser= async(req,res=response)=>{
     const {id, campos, nuevaPass} = req.body;
     const adminDB= await Admin.findById(req.uid);    
 
-    if(!adminDB){
+    if(!adminDB && req.body.id!=req.uid){
         res.json({
             ok:false
         })
@@ -163,7 +163,7 @@ const actualizarUser= async(req,res=response)=>{
         }
         const {...camposU}=usuarioDB;
         camposU._doc=campos;
-        if(nuevaPass!=''){
+        if(nuevaPass && nuevaPass!=''){
             const salt=bcrypt.genSaltSync();
             camposU._doc.pass=bcrypt.hashSync(nuevaPass,salt);
         }
