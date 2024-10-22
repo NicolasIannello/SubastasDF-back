@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const Evento = require('../models/evento');
+const Favorito = require('../models/favorito');
 
 mongoose.set('strictQuery', false);
 
@@ -58,6 +59,7 @@ const tracking = async() =>{
                 campos.estado=2;
                 await Evento.findByIdAndUpdate(eventoDB2[i]._id, campos,{new:true});         
                 console.log('Cerrando evento: '+eventoDB2[i]._id);
+                await Favorito.deleteMany({uuid_evento:eventoDB2[i].uuid});
             }        
         }
     }

@@ -9,6 +9,8 @@ const path=require('path');
 const { subirImagen, borrarImagen } = require('../helpers/imagenes');
 const eventoLote = require('../models/evento-lote');
 const evento = require('../models/evento');
+const Usuario = require('../models/usuario');
+const Favorito = require('../models/favorito');
 
 const crearLote= async(req,res = response) =>{
     try {
@@ -362,5 +364,65 @@ const duplicarLote= async(req,res = response) =>{
     }
 };
 
+const setFavorito= async(req,res = response) =>{
+    try {
+        if(await isAdmin2(req.uid)==2){
+            const {lote,evento} = req.body;
+            const userDB = await Usuario.findById(req.uid);
+            if(userDB){
+                const favDB = await Favorito.find({mail:userDB.mail});
+                if(favDB[0]){
+                    await Favorito.deleteMany({mail:userDB.mail})
+                }else{
+                    const favorito= new Favorito({mail:userDB.mail,uuid_evento:evento,uuid_lote:lote});
+                    await favorito.save();
+                }
+            }
+            
+            res.json({
+                ok:true,
+            });
+        }else{
+            res.json({
+                ok:false,
+            });
+        }
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({
+            ok:false,
+            msg:'error'
+        });
+    }
+}
 
-module.exports={ crearLote, getLotes, lote, getArchivo, deleteLote, actualizarLote, duplicarLote }
+const getFavorito= async(req,res = response) =>{
+    try {
+        
+        if(await isAdmin2(req.uid)==2){
+            const {lote,evento} = req.body;
+            const userDB = await Usuario.findById(req.uid);
+            
+            if(userDB){
+                const favDB = await Favorito.find({mail:userDB.mail,uuid_evento:evento,uuid_lote:lote});
+                                
+                res.json({
+                    ok:true,
+                    favDB
+                });
+            }
+        }else{
+            res.json({
+                ok:false,
+            });
+        }
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({
+            ok:false,
+            msg:'error'
+        });
+    }
+}
+
+module.exports={ crearLote, getLotes, lote, getArchivo, deleteLote, actualizarLote, duplicarLote, setFavorito, getFavorito }

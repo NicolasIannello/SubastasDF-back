@@ -2,7 +2,7 @@ const { Router }=require('express');
 const { check }=require('express-validator');
 const { validarCampos } = require('../middlewares/validar-campos');
 const { validarJWT } = require('../middlewares/validar-jwt');
-const { crearLote, getLotes, lote, getArchivo, deleteLote, actualizarLote, duplicarLote } = require('../controllers/lote');
+const { crearLote, getLotes, lote, getArchivo, deleteLote, actualizarLote, duplicarLote, setFavorito, getFavorito } = require('../controllers/lote');
 const expressFileUpload =require('express-fileupload');
 
 const router=Router();
@@ -60,6 +60,24 @@ router.post('/duplicarLote', [
     validarCampos,
     validarJWT
 ], duplicarLote);
+
+router.post('/setFavorito', [
+    check('lote','el campo es obligatorio').not().isEmpty(),
+    check('evento','el campo es obligatorio').not().isEmpty(),
+    check('token','el campo es obligatorio').not().isEmpty(),
+    check('tipo','el campo es obligatorio').not().isEmpty(),
+    validarCampos,
+    validarJWT
+], setFavorito);
+
+router.post('/getFavorito', [
+    check('lote','el campo es obligatorio').not().isEmpty(),
+    check('evento','el campo es obligatorio').not().isEmpty(),
+    check('token','el campo es obligatorio').not().isEmpty(),
+    check('tipo','el campo es obligatorio').not().isEmpty(),
+    validarCampos,
+    validarJWT
+], getFavorito);
 
 router.get('/img', getArchivo);
 
