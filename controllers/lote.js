@@ -36,6 +36,8 @@ const crearLote= async(req,res = response) =>{
                 lote.disponible=true;
                 lote.terminos_condiciones=pdfFile.pdf;
                 lote.uuid=uuidv4();
+                lote.ganador='';
+                lote.precio_ganador='';
                 await lote.save();  
 
                 if(req.files['img'].length==undefined){
