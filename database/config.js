@@ -4,6 +4,7 @@ const Favorito = require('../models/favorito');
 const EventoLote = require('../models/evento-lote');
 const Lote = require('../models/lote');
 const Oferta = require('../models/oferta');
+const OfertaAuto = require('../models/oferta-auto');
 
 mongoose.set('strictQuery', false);
 
@@ -60,7 +61,8 @@ const tracking = async() =>{
                 campos.estado=2;
                 await Evento.findByIdAndUpdate(eventoDB2[i]._id, campos,{new:true});         
                 console.log('Cerrando evento: '+eventoDB2[i]._id);
-                await Favorito.deleteMany({uuid_evento:eventoDB2[i].uuid});
+                //await Favorito.deleteMany({uuid_evento:eventoDB2[i].uuid});
+                await OfertaAuto.deleteMany({uuid_evento:eventoDB2[i].uuid});
 
                 const eventoloteDB = await EventoLote.find({uuid_evento:eventoDB2[i].uuid})
                 for (let j = 0; j < eventoloteDB.length; j++) {
