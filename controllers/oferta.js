@@ -304,7 +304,7 @@ const getOfertas= async(req,res = response) =>{
                     "evento.modalidad":0,           "evento.publicar_cierre":0,     "evento.inicio_automatico":0,   "evento.mostrar_precio":0,
                     "evento.mostrar_ganadores":0,   "evento.mostrar_ofertas":0,     "evento.grupo":0,               "evento.home":0,
                     "evento.eventos":0,             "evento.visitas":0,             /*"evento.estado":0,*/          "evento.uuid":0,
-                    "evento.estado":0,              "fecha_cierre":0,               "hora_cierre":0
+                    "evento.estado":0,              "evento.fecha_cierre":0,        "evento.hora_cierre":0
                 } },
                 { $lookup: {
                     from: "lotes",
