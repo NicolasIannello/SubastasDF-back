@@ -425,4 +425,64 @@ const getFavorito= async(req,res = response) =>{
     }
 }
 
-module.exports={ crearLote, getLotes, lote, getArchivo, deleteLote, actualizarLote, duplicarLote, setFavorito, getFavorito }
+const getFavoritos= async(req,res = response) =>{
+    try {
+        const flag = await isAdmin2(req.uid);
+        if(flag==2){
+            const userDB = await Usuario.findById(req.uid)
+
+            const favoritoDB = await Favorito.aggregate([
+                { "$match": { mail: userDB.mail } },
+                { $project: { __v: 0, "__v": 0 } },
+                { $lookup: {
+                    from: "eventos",
+                    localField: "uuid_evento",
+                    foreignField: "uuid",
+                    as: "evento"
+                } },
+                {$unwind: { path: "$evento", preserveNullAndEmptyArrays: true }},
+                { $project: {
+                    __v: 0,
+                    "evento._id": 0,                "evento.__v": 0,                "evento.categoria":0,           "evento.fecha_inicio":0,
+                    /*"evento.fecha_cierre":0,*/    "evento.hora_inicio":0,         /*"evento.hora_cierre":0,*/     "evento.segundos_cierre":0,
+                    "evento.modalidad":0,           "evento.publicar_cierre":0,     "evento.inicio_automatico":0,   "evento.mostrar_precio":0,
+                    "evento.mostrar_ganadores":0,   "evento.mostrar_ofertas":0,     "evento.grupo":0,               "evento.home":0,
+                    "evento.eventos":0,             "evento.visitas":0,             /*"evento.estado":0,*/          "evento.uuid":0,
+                    "evento.estado":0,              "evento.fecha_cierre":0,        "evento.hora_cierre":0
+                } },
+                { $lookup: {
+                    from: "lotes",
+                    localField: "uuid_lote",
+                    foreignField: "uuid",
+                    as: "lote"
+                } },
+                {$unwind: { path: "$lote", preserveNullAndEmptyArrays: true }},
+                { $project: {
+                    __v: 0,
+                    "lote.aclaracion": 0,    "lote.base_salida": 0,   "lote.uuid": 0,                  "lote.__v": 0,         "lote._id": 0,
+                    "lote.descripcion": 0,   "lote.disponible": 0,    "lote.incremento": 0,            "lote.moneda": 0,
+                    "lote.precio_base": 0,   "lote.precio_salida": 0, "lote.terminos_condiciones": 0
+                } },
+                { "$sort": { _id: -1 } },
+            ]);
+
+            res.json({
+                ok:true,
+                favoritoDB
+            });
+            return;
+        }else{
+            res.json({
+                ok:false
+            });
+        }
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({
+            ok:false,
+            msg:'error'
+        });
+    }
+}
+
+module.exports={ crearLote, getLotes, lote, getArchivo, deleteLote, actualizarLote, duplicarLote, setFavorito, getFavorito, getFavoritos }
