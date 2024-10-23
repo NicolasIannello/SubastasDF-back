@@ -74,9 +74,16 @@ const checkOfertaA= async(lote,evento) =>{
 const setOfertaA= async(req,res = response) =>{
     try {
         if(await isAdmin2(req.uid)==2){
+            const {evento, lote, cantidad} = req.body
             const userDB = await Usuario.findById(req.uid);
+            const eventoDB = await Evento.find({uuid:evento});
+            if(eventoDB[0].estado!=1){
+                res.json({
+                    ok:false,
+                });
+                return;
+            }
             if(userDB){
-                const {evento, lote, cantidad} = req.body
                 const oferta_autoDB = await OfertaAuto.find({mail:userDB.mail,uuid_evento:evento,uuid_lote:lote});
                 if(oferta_autoDB[0]){
                     let {...campos}=oferta_autoDB[0];        
