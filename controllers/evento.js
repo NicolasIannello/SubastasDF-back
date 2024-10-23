@@ -7,6 +7,7 @@ const Lote = require('../models/lote');
 const { subirImagen, borrarImagen } = require('../helpers/imagenes');
 const Imagen = require('../models/imagen');
 const fs=require('fs');
+const Usuario = require('../models/usuario');
 
 const crearEvento= async(req,res = response) =>{
     try {
@@ -136,9 +137,12 @@ const getEvento= async(req,res = response) =>{
                 });
                 return;
         }
+        const userDB = await Usuario.findById(req.uid);        
+        let matchOperator2={ "$match": { 'grupo': (userDB.grupo=='general'? { $exists: true } : userDB.grupo) } };
         
         const evento= await Evento.aggregate([
             matchOperator,
+            matchOperator2,
             { $project: { __v: 0, '_id': 0 } },
             { $lookup: {
                 from: "eventolotes",
