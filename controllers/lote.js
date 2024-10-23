@@ -129,7 +129,7 @@ const lote= async(req,res = response) =>{
             const flag = await eventoLote.find({uuid_lote:lote[0].uuid})
             if(flag){
                 const flag2 = await evento.find({uuid: flag[0].uuid_evento})
-                if(!flag2 || flag2[0].estado!=1){
+                if(!flag2 || flag2[0].estado==0){
                     res.json({
                         ok:false,
                     });
@@ -335,6 +335,8 @@ const duplicarLote= async(req,res = response) =>{
             lote.terminos_condiciones=pdf+'.pdf'
             lote.disponible=true;
             lote.uuid=uuidv4();
+            lote.ganador='';
+            lote.precio_ganador='';
             await lote.save();
 
             for (let i = 0; i < imgDB.length; i++) {
