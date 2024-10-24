@@ -69,6 +69,8 @@ const crearLote= async(req,res = response) =>{
 
 const getLotes= async(req,res = response) =>{
     if(await isAdmin(res,req.uid)){
+        console.log('lote');
+        
         const desde= parseInt(req.query.desde) || 0;
         const limit= parseInt(req.query.limit) || 20;
         const orden= parseInt(req.query.orden) || 1;
@@ -88,6 +90,17 @@ const getLotes= async(req,res = response) =>{
                     "terminos_condiciones": 0,
                 } },
                 sortOperator,
+                { $lookup: {
+                    from: "ofertas",
+                    localField: "uuid",
+                    foreignField: "uuid_lote",
+                    "pipeline": [ 
+                        { "$sort" : { "cantidad" : -1 } },
+                        { "$limit" : 1 } 
+                    ],
+                    as: "oferta"
+                } },
+                {$unwind: { path: "$oferta", preserveNullAndEmptyArrays: true }},
                 { $skip: desde },
                 { $limit: limit },
             ]).collation({locale: 'en'}),
