@@ -118,6 +118,7 @@ const quitarLote= async(req,res = response) =>{
 };
 
 const getEvento= async(req,res = response) =>{
+        let flagVistas=false;
         var matchOperator = { "$match": { } };
         var matchOperator2={ "$match": { 'grupo': { $exists: true } } };    
         switch (await isAdmin2(req.uid)) {
@@ -129,6 +130,7 @@ const getEvento= async(req,res = response) =>{
                     matchOperator['$match'][req.body.dato] = true
                 }else{
                     matchOperator['$match']['uuid'] = req.body.dato
+                    flagVistas=true;    
                 }
                 const userDB = await Usuario.findById(req.uid);        
                 matchOperator2['$match']['grupo'] = (userDB.grupo=='general'? { $exists: true } : userDB.grupo);
@@ -144,7 +146,7 @@ const getEvento= async(req,res = response) =>{
         const evento= await Evento.aggregate([
             matchOperator,
             matchOperator2,
-            { $project: { __v: 0, '_id': 0 } },
+            { $project: { __v: 0, } },
             { $lookup: {
                 from: "eventolotes",
                 localField: "uuid",
@@ -167,6 +169,12 @@ const getEvento= async(req,res = response) =>{
             { $project: { __v: 0, "img.orden": 0, "img._id": 0, "img.lote": 0, } },    
         ]).collation({locale: 'en'});
         
+        if(flagVistas){
+            let {lotes, img, ...campos}=evento[0];    
+            campos.visitas+=1;    
+            await Evento.findByIdAndUpdate(evento[0]._id, campos,{new:true});    
+        }
+
         if(evento.length!=0 && evento[0].estado==0 && await isAdmin2(req.uid)==2 && !req.body.flag){
             res.json({
                 ok:false,
