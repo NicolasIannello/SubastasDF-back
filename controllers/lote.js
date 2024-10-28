@@ -11,6 +11,7 @@ const eventoLote = require('../models/evento-lote');
 const evento = require('../models/evento');
 const Usuario = require('../models/usuario');
 const Favorito = require('../models/favorito');
+const Oferta = require('../models/oferta');
 
 const crearLote= async(req,res = response) =>{
     try {
@@ -69,8 +70,6 @@ const crearLote= async(req,res = response) =>{
 
 const getLotes= async(req,res = response) =>{
     if(await isAdmin(res,req.uid)){
-        console.log('lote');
-        
         const desde= parseInt(req.query.desde) || 0;
         const limit= parseInt(req.query.limit) || 20;
         const orden= parseInt(req.query.orden) || 1;
@@ -216,6 +215,7 @@ const deleteLote=async(req,res=response) =>{
                     await Imagen.findByIdAndDelete(imgDB[i]._id);
                 }
             }
+            await Oferta.deleteMany({uuid_lote:loteDB[0].uuid});
             await Lote.findByIdAndDelete(loteDB[0]._id);
 
             res.json({
