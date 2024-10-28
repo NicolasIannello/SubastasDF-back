@@ -8,6 +8,8 @@ const { subirImagen, borrarImagen } = require('../helpers/imagenes');
 const Imagen = require('../models/imagen');
 const fs=require('fs');
 const Usuario = require('../models/usuario');
+const Favorito = require('../models/favorito');
+const OfertaAuto = require('../models/oferta-auto');
 
 const crearEvento= async(req,res = response) =>{
     try {
@@ -255,6 +257,8 @@ const eliminarEvento=async(req,res=response) =>{
                     await Imagen.findByIdAndDelete(imgDB[i]._id);
                 }
             }
+            await Favorito.deleteMany({uuid_evento:eventoDB[0].uuid});
+            await OfertaAuto.deleteMany({uuid_evento:eventoDB[0].uuid});
             await Evento.findByIdAndDelete(eventoDB[0]._id);
 
             res.json({
