@@ -29,7 +29,7 @@ const checkCierre= async(evento) =>{
             hora_nueva=fecha_nueva[2].slice(6,14)
             fecha_nueva[2].slice(0,4)
             hora_nueva2 = hora_nueva.split(":")
-            if(fecha_nueva[2][15]=='P'){
+            if(fecha_nueva[2][fecha_nueva[2].length-2]=='P'){                
                 hora_nueva=(parseInt(hora_nueva2[0])+12)+":"+hora_nueva2[1]
             }else{
                 hora_nueva=(hora_nueva2[0]=='12'?"00":hora_nueva2[0])+":"+hora_nueva2[1];
@@ -178,6 +178,21 @@ const getDatos= async(req,res = response) =>{
                 { "$match": { uuid_lote: lote } },
                 { $project: { __v: 0, "__v": 0,} },
                 { $lookup: {
+                    from: "usuarios",
+                    localField: "mail",
+                    foreignField: "mail",
+                    as: "user"
+                } },
+                { $project: {
+                    __v: 0,
+                    "user.__v": 0,              "user.actividad": 0,        "user.ciudad": 0,
+                    "user.como_encontro": 0,    "user.domicilio": 0,        "user.grupo": 0,
+                    "user.habilitado": 0,       "user.mail": 0,             "user.nombre": 0,       "user.pais": 0,
+                    "user.pass": 0,             "user.postal": 0,           "user.provincia": 0,    "user.telefono": 0,
+                    "user.tipo": 0,             "user.ultima_conexion":0,   "user.validado": 0,     "user._id": 0,
+                } },
+                {$unwind: { path: "$user", preserveNullAndEmptyArrays: true }},
+                { $lookup: {
                     from: "eventos",
                     localField: "uuid_evento",
                     foreignField: "uuid",
@@ -210,7 +225,7 @@ const getDatos= async(req,res = response) =>{
                 if(ofertaDB[0]){
                     if(eventoDB[0].mostrar_ofertas) cantidad = ofertaDB.length;
                     if(eventoDB[0].mostrar_precio) precio = ofertaDB[0].cantidad;
-                    if(eventoDB[0].mostrar_ganadores) ganador = ofertaDB[0].mail;    
+                    if(eventoDB[0].mostrar_ganadores) ganador = ofertaDB[0]._id;    
                 }
             }
             res.json({
