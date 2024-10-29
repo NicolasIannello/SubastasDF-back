@@ -354,8 +354,10 @@ const getDatos= async(req,res=response)=>{
 const getAdjudicados= async(req,res=response)=>{
     const userDB = await Usuario.findById(req.uid);
     const lotesDB = await Lote.find({ganador:userDB.mail})
+    let adjudicadosDB = [];
 
-    const adjudicadosDB=await EventoLote.aggregate([
+    if(!lotesDB){
+    adjudicadosDB=await EventoLote.aggregate([
         { "$match": { uuid_lote:lotesDB[0].uuid } },
         { $lookup: {
             from: "eventos",
@@ -411,6 +413,7 @@ const getAdjudicados= async(req,res=response)=>{
             "lote.uuid": 0,
         } },
     ]).collation({locale: 'en'});
+    }
 
     res.json({
         ok:true,
