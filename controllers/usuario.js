@@ -135,7 +135,8 @@ const renewToken= async(req,res=response)=>{
             ok:true,
             token,
             nombre: usuarioDB.nombre,
-            email: usuarioDB.mail
+            email: usuarioDB.mail,
+            _id
         })
     }
 }

@@ -247,6 +247,8 @@ const getDatos= async(req,res = response) =>{
                 } },
                 { "$sort": { cantidad: -1 } },
             ]);
+            console.log(ofertaDB);
+            
             res.json({
                 ok:true,
                 ofertaDB
@@ -260,10 +262,11 @@ const getDatos= async(req,res = response) =>{
             let ganador=null
             if(eventoDB[0]){
                 const ofertaDB = await Oferta.find({uuid_evento: evento, uuid_lote: lote}).sort({cantidad:-1});
+                const userDB = await Usuario.find({mail: ofertaDB[0].mail});
                 if(ofertaDB[0]){
                     if(eventoDB[0].mostrar_ofertas) cantidad = ofertaDB.length;
                     if(eventoDB[0].mostrar_precio) precio = ofertaDB[0].cantidad;
-                    if(eventoDB[0].mostrar_ganadores) ganador = ofertaDB[0]._id;    
+                    if(eventoDB[0].mostrar_ganadores) ganador = userDB[0]._id;    
                 }
             }
             res.json({
