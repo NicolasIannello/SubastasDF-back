@@ -387,9 +387,9 @@ const setFavorito= async(req,res = response) =>{
             const {lote,evento} = req.body;
             const userDB = await Usuario.findById(req.uid);
             if(userDB){
-                const favDB = await Favorito.find({mail:userDB.mail});
+                const favDB = await Favorito.find({mail:userDB.mail,uuid_evento:evento,uuid_lote:lote});
                 if(favDB[0]){
-                    await Favorito.deleteMany({mail:userDB.mail})
+                    await Favorito.deleteMany({mail:userDB.mail,uuid_evento:evento,uuid_lote:lote})
                 }else{
                     const favorito= new Favorito({mail:userDB.mail,uuid_evento:evento,uuid_lote:lote});
                     await favorito.save();
