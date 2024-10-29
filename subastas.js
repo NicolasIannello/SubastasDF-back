@@ -2,6 +2,8 @@ const express =require('express');
 require('dotenv').config();
 const cors=require('cors');
 const { dbConnection } = require('./database/config');
+const http = require('http');
+const { socketConnection } = require('./helpers/socket-io');
 
 const app=express();
 
@@ -18,6 +20,9 @@ app.use('/subasta/lote', require('./routes/lotes'));
 app.use('/subasta/evento', require('./routes/eventos'));
 app.use('/subasta/oferta', require('./routes/ofertas'));
 
-app.listen( process.env.PORT, () =>{
+const server = http.createServer(app);
+socketConnection(server);
+
+server.listen( process.env.PORT, () =>{
     console.log('Iniciando');
 });

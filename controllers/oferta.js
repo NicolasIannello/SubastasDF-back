@@ -7,8 +7,9 @@ const EventoLote = require('../models/evento-lote');
 const Usuario = require('../models/usuario');
 const OfertaAuto = require('../models/oferta-auto');
 const Lote = require('../models/lote');
+const { sendMessage } = require('../helpers/socket-io');
 
-const checkCierre= async(evento) =>{
+const checkCierre= async(evento,lote) =>{
     try {
         const eventoDB = await Evento.find({uuid: evento});
         let dateFin= new Date(Date.parse(eventoDB[0].fecha_cierre+' '+eventoDB[0].hora_cierre));
@@ -41,6 +42,43 @@ const checkCierre= async(evento) =>{
                             
             await Evento.findByIdAndUpdate(eventoDB[0]._id, campos,{new:true});  
         }
+        const ofertaDB = await Oferta.aggregate([
+            { "$match": { uuid_lote: lote } },
+            { $project: { __v: 0, "__v": 0, "fecha": 0, "tipo": 0, "_id": 0 } },
+            { $lookup: {
+                from: "usuarios",
+                localField: "mail",
+                foreignField: "mail",
+                as: "user"
+            } },
+            { $project: {
+                __v: 0,
+                "user.__v": 0,              "user.actividad": 0,        "user.ciudad": 0,
+                "user.como_encontro": 0,    "user.domicilio": 0,        "user.grupo": 0,
+                "user.habilitado": 0,       "user.mail": 0,             "user.nombre": 0,       "user.pais": 0,
+                "user.pass": 0,             "user.postal": 0,           "user.provincia": 0,    "user.telefono": 0,
+                "user.tipo": 0,             "user.ultima_conexion":0,   "user.validado": 0,     "user.cuil_cuit": 0,
+            } },
+            {$unwind: { path: "$user", preserveNullAndEmptyArrays: true }},
+            { $lookup: {
+                from: "eventos",
+                localField: "uuid_evento",
+                foreignField: "uuid",
+                as: "evento"
+            } },
+            {$unwind: { path: "$evento", preserveNullAndEmptyArrays: true }},
+            { $project: {
+                __v: 0,
+                "evento._id": 0,                "evento.__v": 0,                "evento.categoria":0,           "evento.fecha_inicio":0,    "evento.nombre":0,
+                /*"evento.fecha_cierre":0,*/    "evento.hora_inicio":0,         /*"evento.hora_cierre":0,*/     "evento.segundos_cierre":0, "evento.estado":0,
+                "evento.modalidad":0,           "evento.publicar_cierre":0,     "evento.inicio_automatico":0,   "evento.mostrar_precio":0,
+                "evento.mostrar_ganadores":0,   "evento.mostrar_ofertas":0,     "evento.grupo":0,               "evento.home":0,
+                "evento.eventos":0,             "evento.visitas":0,             /*"evento.estado":0,*/          "evento.uuid":0,
+            } },
+            { "$sort": { cantidad: -1 } },
+        ]);
+        ofertaDB[0].nro=ofertaDB.length;
+        sendMessage(ofertaDB[0].uuid_evento, "message", ofertaDB[0])
     } catch (error) {
         console.log(error);
     }
@@ -65,7 +103,7 @@ const checkOfertaA= async(lote,evento) =>{
                 await oferta.save();
             }
         }
-        checkCierre(evento)
+        checkCierre(evento,lote)
     } catch (error) {
         console.log(error);
     }
