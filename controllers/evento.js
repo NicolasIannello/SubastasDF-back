@@ -153,6 +153,9 @@ const getEvento= async(req,res = response) =>{
                 from: "eventolotes",
                 localField: "uuid",
                 foreignField: "uuid_evento",
+                "pipeline": [ 
+                    { "$sort" : { "uuid_lote" : -1 } },
+                ],
                 as: "lotes"
             } },
             { $project: {
