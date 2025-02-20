@@ -34,10 +34,10 @@ const validarJWT=(req,res,next)=>{
 
         req.uid=uid;
         
-        if(tipo==3){
-            let flag= uid ? true:false;
+        if(tipo==3 && !uid?true:false){
+            // let flag= uid ? true:false;
             return res.json({
-                ok: flag,
+                ok: false,//flag,
             });
         }
 
