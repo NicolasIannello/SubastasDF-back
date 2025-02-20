@@ -255,6 +255,10 @@ const getDatos= async(req,res = response) =>{
             return;
         }else if(flag!=3){
             const {evento, lote} = req.body
+            const loteDB = await Lote.find({uuid: lote});
+            let {...campos}=loteDB[0];            
+            campos._doc.visitas+=1;    
+            await Lote.findByIdAndUpdate(loteDB[0]._id, campos,{new:true});    
             const eventoDB = await Evento.find({uuid: evento});
             let cantidad=null;
             let precio=null;

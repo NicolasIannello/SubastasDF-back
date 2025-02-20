@@ -14,6 +14,7 @@ const LoteSchema = Schema({
     disponible: { type: Boolean, required: true },
     ganador: { type: String },
     precio_ganador: { type: String },
+    visitas: { type: Number, required: true },
 });
 
 LoteSchema.method('toJSON', function() {
