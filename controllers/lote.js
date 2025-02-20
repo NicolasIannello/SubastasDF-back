@@ -39,6 +39,7 @@ const crearLote= async(req,res = response) =>{
                 lote.uuid=uuidv4();
                 lote.ganador='';
                 lote.precio_ganador='';
+                lote.visitas=0;
                 await lote.save();  
 
                 if(req.files['img'].length==undefined){
@@ -100,6 +101,12 @@ const getLotes= async(req,res = response) =>{
                     as: "oferta"
                 } },
                 {$unwind: { path: "$oferta", preserveNullAndEmptyArrays: true }},
+                { $lookup: {
+                    from: "ofertas",
+                    localField: "uuid",
+                    foreignField: "uuid_lote",
+                    as: "ofertas"
+                } },
                 { $skip: desde },
                 { $limit: limit },
             ]).collation({locale: 'en'}),
