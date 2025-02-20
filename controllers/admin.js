@@ -5,6 +5,7 @@ const Admin = require('../models/admin');
 const Usuario = require('../models/usuario');
 const Empresa = require('../models/empresa');
 const Lote = require('../models/lote');
+const Evento = require('../models/evento');
 
 const login=async(req,res=response)=>{
     const { user, pass }= req.body;
@@ -292,6 +293,13 @@ const buscarDato= async(req,res=response) =>{
                 "descripcion": 0,
                 "aclaracion": 0,
                 "terminos_condiciones": 0,
+            } },
+        ]).collation({locale: 'en'});
+    }else if(user=='evento'){
+        busqueda= await Evento.aggregate([
+            regExOperator,
+            { $project: {
+                __v: 0,
             } },
         ]).collation({locale: 'en'});
     }else{
