@@ -247,7 +247,6 @@ const getDatos= async(req,res = response) =>{
                 } },
                 { "$sort": { cantidad: -1 } },
             ]);
-            console.log(ofertaDB);
             
             res.json({
                 ok:true,
