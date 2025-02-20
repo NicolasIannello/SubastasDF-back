@@ -135,6 +135,29 @@ const lote= async(req,res = response) =>{
                 as: "img"
             } },
             { $project: { __v: 0, "img.__v": 0, "img._id": 0, "img.lote": 0, } },
+            { $lookup: {
+                from: "eventolotes",
+                localField: "uuid",
+                foreignField: "uuid_lote",
+                as: "evlot"
+            } },
+            {$unwind: { path: "$evlot", preserveNullAndEmptyArrays: true }},
+            { $project: { __v: 0, "evlot._v": 0, "evlot._id": 0, } },
+            { $lookup: {
+                from: "eventos",
+                localField: "evlot.uuid_evento",
+                foreignField: "uuid",
+                as: "evento"
+            } },
+            {$unwind: { path: "$evento", preserveNullAndEmptyArrays: true }},
+            { $project: {
+                __v: 0,
+                "evento._id": 0,                "evento.__v": 0,                "evento.categoria":0,           "evento.fecha_inicio":0,
+                /*"evento.fecha_cierre":0,*/    "evento.hora_inicio":0,         /*"evento.hora_cierre":0,*/     "evento.segundos_cierre":0,
+                "evento.modalidad":0,           "evento.publicar_cierre":0,     "evento.inicio_automatico":0,   "evento.mostrar_precio":0,
+                "evento.mostrar_ganadores":0,   "evento.mostrar_ofertas":0,     "evento.grupo":0,               "evento.home":0,
+                "evento.eventos":0,             "evento.visitas":0,             /*"evento.estado":0,*/          "evento.uuid":0,
+            } },
         ]).collation({locale: 'en'})
 
         if(await isAdmin2(req.uid)==2){
