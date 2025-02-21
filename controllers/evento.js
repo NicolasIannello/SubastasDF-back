@@ -63,7 +63,7 @@ const getEventos= async(req,res = response) =>{
                     __v: 0,
                     "lotes.__v": 0,
                     "lotes._id": 0,
-                    "lotes.uuid_evento": 0,
+                    "lotes.uuid_evento": 0, "lote.visitas": 0 
                 } },
                 { $lookup: {
                     from: "imagens",
