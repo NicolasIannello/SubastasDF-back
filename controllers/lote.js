@@ -508,7 +508,7 @@ const getFavoritos= async(req,res = response) =>{
                     __v: 0,
                     "lote.aclaracion": 0,    "lote.base_salida": 0,   "lote.uuid": 0,                  "lote.__v": 0,         "lote._id": 0,
                     "lote.descripcion": 0,   "lote.disponible": 0,    "lote.incremento": 0,            "lote.moneda": 0,
-                    "lote.precio_base": 0,   "lote.precio_salida": 0, "lote.terminos_condiciones": 0
+                    "lote.precio_base": 0,   "lote.precio_salida": 0, "lote.terminos_condiciones": 0 , "lote.visitas": 0
                 } },
                 { "$sort": { _id: -1 } },
             ]);
