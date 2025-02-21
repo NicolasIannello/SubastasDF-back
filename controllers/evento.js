@@ -184,7 +184,7 @@ const getEvento= async(req,res = response) =>{
                       $match: {
                         $expr: {
                           $and: [
-                            { $eq: ['$mail', userDB.mail ? userDB.mail : 'dsad'] },
+                            { $eq: ['$mail', userDB ? userDB.mail : 'dsad'] },
                           ]
                         }
                       }
