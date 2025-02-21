@@ -376,31 +376,34 @@ const getOfertas= async(req,res = response) =>{
                     from: "lotes",
                     localField: "uuid_lote",
                     foreignField: "uuid",
-                    as: "lote"
+                    as: "lote",
+                    "pipeline": [ 
+                        { $lookup: {
+                            from: "ofertas",
+                            localField: "uuid",
+                            foreignField: "uuid_lote",
+                            "pipeline": [ 
+                                { "$sort" : { "cantidad" : -1 } },
+                                { "$limit" : 1 },
+                            ],
+                            as: "oferta",
+                        } },
+                        { $project: {
+                            __v: 0,
+                            "oferta.fecha": 0,    "oferta.tipo": 0,   "oferta.uuid": 0, "oferta.__v": 0,         "oferta._id": 0,
+                            "oferta.mail": 0,   "oferta.tipo": 0,   "oferta.uuid_evento": 0,"oferta.uuid_lote": 0
+                        } },
+                        {$unwind: { path: "$oferta", preserveNullAndEmptyArrays: true }},
+                    ],
                 } },
                 {$unwind: { path: "$lote", preserveNullAndEmptyArrays: true }},
                 { $project: {
                     __v: 0,
-                    "lote.aclaracion": 0,    "lote.base_salida": 0,   "lote.uuid": 0,                  "lote.__v": 0,         "lote._id": 0,
+                    "lote.aclaracion": 0,    "lote.base_salida": 0,     "lote.uuid": 0,              "lote.__v": 0,         "lote._id": 0,
                     "lote.descripcion": 0,   "lote.disponible": 0,    "lote.incremento": 0,            "lote.moneda": 0,
-                    "lote.precio_base": 0,   "lote.precio_salida": 0, "lote.terminos_condiciones": 0, "lote.visitas": 0
+                    "lote.precio_base": 0,   "lote.precio_salida": 0, "lote.terminos_condiciones": 0, "lote.visitas": 0,"lote.ganador": 0,"lote.precio_ganador": 0
                 } },
-                { $lookup: {
-                    from: "ofertas",
-                    localField: "lote.uuid",
-                    foreignField: "lote_uuid",
-                    "pipeline": [ 
-                        { "$sort" : { "cantidad" : -1 } },
-                        { "$limit" : 1 },
-                    ],
-                    as: "oferta"
-                } },
-                { $project: {
-                    __v: 0,
-                    "oferta.fecha": 0,    "oferta.tipo": 0,   "oferta.uuid": 0, "oferta.__v": 0,         "oferta._id": 0,
-                    "oferta.mail": 0,   "oferta.tipo": 0,   "oferta.uuid_evento": 0,"oferta.uuid_lote": 0
-                } },
-                { "$sort": { _id: -1 } },
+                { "$sort": { fecha: -1 } },
             ]);
 
             res.json({

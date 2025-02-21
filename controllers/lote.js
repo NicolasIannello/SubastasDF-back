@@ -501,14 +501,49 @@ const getFavoritos= async(req,res = response) =>{
                     from: "lotes",
                     localField: "uuid_lote",
                     foreignField: "uuid",
-                    as: "lote"
+                    as: "lote",
+                    "pipeline": [ 
+                        { $lookup: {
+                            from: "ofertas",
+                            localField: "uuid",
+                            foreignField: "uuid_lote",
+                            "pipeline": [ 
+                                { "$match": { mail: userDB.mail } },
+                                { "$sort" : { "cantidad" : -1 } },
+                                { "$limit" : 1 },
+                            ],
+                            as: "mioferta"
+                        } },
+                        {$unwind: { path: "$mioferta", preserveNullAndEmptyArrays: true }},
+                        { $project: {
+                            __v: 0,
+                            "mioferta.fecha": 0,    "mioferta.tipo": 0,   "mioferta.uuid": 0, "mioferta.__v": 0,         "mioferta._id": 0,
+                            "mioferta.mail": 0,   "mioferta.tipo": 0,   "mioferta.uuid_evento": 0,"mioferta.uuid_lote": 0
+                        } },
+                        { $lookup: {
+                            from: "ofertas",
+                            localField: "uuid",
+                            foreignField: "uuid_lote",
+                            "pipeline": [ 
+                                { "$sort" : { "cantidad" : -1 } },
+                                { "$limit" : 1 },
+                            ],
+                            as: "oferta"
+                        } },
+                        {$unwind: { path: "$oferta", preserveNullAndEmptyArrays: true }},
+                        { $project: {
+                            __v: 0,
+                            "oferta.fecha": 0,    "oferta.tipo": 0,   "oferta.uuid": 0, "oferta.__v": 0,         "oferta._id": 0,
+                            "oferta.mail": 0,   "oferta.tipo": 0,   "oferta.uuid_evento": 0,"oferta.uuid_lote": 0
+                        } },
+                    ],
                 } },
                 {$unwind: { path: "$lote", preserveNullAndEmptyArrays: true }},
                 { $project: {
                     __v: 0,
                     "lote.aclaracion": 0,    "lote.base_salida": 0,   "lote.uuid": 0,                  "lote.__v": 0,         "lote._id": 0,
                     "lote.descripcion": 0,   "lote.disponible": 0,    "lote.incremento": 0,            "lote.moneda": 0,
-                    "lote.precio_base": 0,   "lote.precio_salida": 0, "lote.terminos_condiciones": 0 , "lote.visitas": 0
+                    "lote.precio_base": 0,   "lote.precio_salida": 0, "lote.terminos_condiciones": 0 , "lote.visitas": 0,"lote.ganador": 0,"lote.precio_ganador": 0
                 } },
                 { "$sort": { _id: -1 } },
             ]);
