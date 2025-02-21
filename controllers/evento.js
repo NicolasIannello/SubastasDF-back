@@ -145,6 +145,8 @@ const getEvento= async(req,res = response) =>{
                 return;
         }
 
+        const userDB = await Usuario.findById(req.uid);        
+
         const evento= await Evento.aggregate([
             matchOperator,
             matchOperator2,
@@ -172,6 +174,44 @@ const getEvento= async(req,res = response) =>{
             } },
             {$unwind: { path: "$img", preserveNullAndEmptyArrays: true }},
             { $project: { __v: 0, "img.orden": 0, "img._id": 0, "img.lote": 0, } },    
+            { $lookup: {
+                from: "vistas",
+                localField: "uuid",
+                foreignField: "uuid_evento",
+                pipeline: [
+                    { "$sort" : { "uuid_lote" : -1 } },
+                    {
+                      $match: {
+                        $expr: {
+                          $and: [
+                            { $eq: ['$mail', userDB.mail ? userDB.mail : 'dsad'] },
+                          ]
+                        }
+                      }
+                    }
+                ],
+                as: "vistas"
+            } },
+            { $project: { "vistas.__v": 0, "vistas.uuid_evento": 0, "vistas.mail": 0, "vistas._id": 0, } },
+            { $lookup: {
+                from: "ofertas",
+                localField: "uuid",
+                foreignField: "uuid_evento",
+                pipeline: [
+                    { "$sort" : { "uuid_lote" : -1 } },
+                    {
+                      $match: {
+                        $expr: {
+                          $and: [
+                            { $eq: ['$mail', userDB ? userDB.mail : 'dsad'] },
+                          ]
+                        }
+                      }
+                    }
+                ],
+                as: "ofertas"
+            } },
+            { $project: { "ofertas.__v": 0, "ofertas.uuid_evento": 0, "ofertas.mail": 0, "ofertas._id": 0, "ofertas.cantidad": 0, "ofertas.tipo": 0, "ofertas.fecha": 0 } },
         ]).collation({locale: 'en'});
         
         if(flagVistas){
