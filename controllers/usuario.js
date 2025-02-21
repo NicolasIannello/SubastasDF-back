@@ -6,6 +6,7 @@ const Usuario = require('../models/usuario');
 const Empresa = require('../models/empresa');
 const EventoLote = require('../models/evento-lote');
 const Lote = require('../models/lote');
+const Vista = require('../models/vista');
 
 const crearUsuario= async(req,res = response) =>{
     const {mail,pass,cuil_cuit,tipo}=req.body;
@@ -422,4 +423,35 @@ const getAdjudicados= async(req,res=response)=>{
     })
 }
 
-module.exports={ crearUsuario, login, renewToken, validarCuenta, cambiarPass, sendCambio, mailContacto, timeNow, getDatos, getAdjudicados }
+const setVista= async(req,res = response) =>{
+    try {
+        const user= await Usuario.findById(req.uid);
+        if(!user){
+            return res.json({
+                ok:true,
+            });
+        }
+        const existeVista= await Vista.findOne({mail: user.mail , uuid_lote: req.body.uuid_lote});
+        if(existeVista){
+            return res.json({
+                ok:true,
+            });
+        }
+
+        const vista= new Vista({mail: user.mail , uuid_lote: req.body.uuid_lote});
+        await vista.save();
+
+        return res.json({
+            ok:true,
+        });
+        
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({
+            ok:false,
+            msg:'error'
+        });
+    }
+};
+
+module.exports={ crearUsuario, login, renewToken, validarCuenta, cambiarPass, sendCambio, mailContacto, timeNow, getDatos, getAdjudicados, setVista }
