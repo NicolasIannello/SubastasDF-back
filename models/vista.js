@@ -1,6 +1,7 @@
 const { Schema, model } = require('mongoose');
 
 const VistaSchema = Schema({
+    uuid_evento: { type: String, require:true },
     uuid_lote: { type: String, require:true },
     mail: { type: String, require:true },
 });

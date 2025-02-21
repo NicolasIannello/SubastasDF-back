@@ -431,14 +431,14 @@ const setVista= async(req,res = response) =>{
                 ok:true,
             });
         }
-        const existeVista= await Vista.findOne({mail: user.mail , uuid_lote: req.body.uuid_lote});
+        const existeVista= await Vista.findOne({mail: user.mail , uuid_lote: req.body.uuid_lote, uuid_evento: req.body.uuid_evento});
         if(existeVista){
             return res.json({
                 ok:true,
             });
         }
 
-        const vista= new Vista({mail: user.mail , uuid_lote: req.body.uuid_lote});
+        const vista= new Vista({mail: user.mail , uuid_lote: req.body.uuid_lote, uuid_evento: req.body.uuid_evento});
         await vista.save();
 
         return res.json({
