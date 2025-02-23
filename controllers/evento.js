@@ -219,7 +219,7 @@ const getEvento= async(req,res = response) =>{
                         }
                       }
                     },
-                    { $group: { _id: "$uuid_lote", oferta: { $max: "$cantidad" } } }
+                    { $group: { _id: "$uuid_lote", uuid_lote : { $first: '$uuid_lote' }, oferta: { $max: "$cantidad" } } }
                 ],
                 as: "ofertas"
             } },
