@@ -10,6 +10,8 @@ const fs=require('fs');
 const Usuario = require('../models/usuario');
 const Favorito = require('../models/favorito');
 const OfertaAuto = require('../models/oferta-auto');
+const Vista = require('../models/vista');
+const Oferta = require('../models/oferta');
 
 const crearEvento= async(req,res = response) =>{
     try {
@@ -88,6 +90,7 @@ const getEventos= async(req,res = response) =>{
 const agregarLotes= async(req,res = response) =>{
     if(await isAdmin(res,req.uid)){
         for (let i = 0; i < req.body.lotes.length; i++) {
+            const eventoDB = await Evento.find({uuid: req.body.evento})
             const loteEventoDB = await EventoLote.find({uuid_lote: req.body.lotes[i]})
             if(loteEventoDB.length==0){
                 const eventoLote = new EventoLote({uuid_lote:req.body.lotes[i], uuid_evento:req.body.evento})
@@ -95,6 +98,11 @@ const agregarLotes= async(req,res = response) =>{
                 const loteDB= await Lote.find({uuid:req.body.lotes[i]});
                 const {...campos}=loteDB[0];
                 campos._doc.disponible=false;
+                if(eventoDB[0].estado=1){
+                    campos._doc.hora_cierre=eventoDB[0].hora_cierre;
+                    campos._doc.fecha_cierre=eventoDB[0].fecha_cierre;
+                    campos._doc.estado=1;
+                }
                 await Lote.findByIdAndUpdate(loteDB[0]._id, campos,{new:true}); 
             }
         }
@@ -111,6 +119,9 @@ const quitarLote= async(req,res = response) =>{
         const loteDB= await Lote.find({uuid:req.body.lote});
         const {...campos}=loteDB[0];
         campos._doc.disponible=true;
+        campos._doc.hora_cierre='';
+        campos._doc.fecha_cierre='';
+        campos._doc.estado=0;
         await Lote.findByIdAndUpdate(loteDB[0]._id, campos,{new:true}); 
 
         res.json({
@@ -289,6 +300,9 @@ const eliminarEvento=async(req,res=response) =>{
                     const loteDB= await Lote.find({uuid:evloDB[i].uuid_lote});
                     const {...campos}=loteDB[0];
                     campos._doc.disponible=true;
+                    campos._doc.hora_cierre='';
+                    campos._doc.fecha_cierre='';
+                    campos._doc.estado=0;
                     await Lote.findByIdAndUpdate(loteDB[0]._id, campos,{new:true}); 
                 }
             }
@@ -302,6 +316,9 @@ const eliminarEvento=async(req,res=response) =>{
             }
             await Favorito.deleteMany({uuid_evento:eventoDB[0].uuid});
             await OfertaAuto.deleteMany({uuid_evento:eventoDB[0].uuid});
+            await Oferta.deleteMany({uuid_evento:eventoDB[0].uuid});
+            await Vista.deleteMany({uuid_evento:eventoDB[0].uuid});
+            await EventoLote.deleteMany({uuid_evento:eventoDB[0].uuid});
             await Evento.findByIdAndDelete(eventoDB[0]._id);
 
             res.json({

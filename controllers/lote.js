@@ -12,6 +12,7 @@ const evento = require('../models/evento');
 const Usuario = require('../models/usuario');
 const Favorito = require('../models/favorito');
 const Oferta = require('../models/oferta');
+const favorito = require('../models/favorito');
 
 const crearLote= async(req,res = response) =>{
     try {
@@ -246,6 +247,10 @@ const deleteLote=async(req,res=response) =>{
                 }
             }
             await Oferta.deleteMany({uuid_lote:loteDB[0].uuid});
+            await Vista.deleteMany({uuid_lote:loteDB[0].uuid});
+            await OfertaAuto.deleteMany({uuid_lote:loteDB[0].uuid});
+            await eventoLote.deleteMany({uuid_lote:loteDB[0].uuid});
+            await favorito.deleteMany({uuid_lote:loteDB[0].uuid});
             await Lote.findByIdAndDelete(loteDB[0]._id);
 
             res.json({
@@ -380,6 +385,9 @@ const duplicarLote= async(req,res = response) =>{
             lote.uuid=uuidv4();
             lote.ganador='';
             lote.precio_ganador='';
+            lote.hora_cierre='';
+            lote.fecha_cierre='';
+            lote.estado=0;
             await lote.save();
 
             for (let i = 0; i < imgDB.length; i++) {

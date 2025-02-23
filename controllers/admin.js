@@ -6,6 +6,7 @@ const Usuario = require('../models/usuario');
 const Empresa = require('../models/empresa');
 const Lote = require('../models/lote');
 const Evento = require('../models/evento');
+const Oferta = require('../models/oferta');
 
 const login=async(req,res=response)=>{
     const { user, pass }= req.body;
@@ -127,6 +128,10 @@ const deleteUser=async(req,res=response) =>{
             if(user.tipo=='emp'){
                 await Empresa.deleteMany({'mail': { $eq: user.mail}})
             }
+            await Favorito.deleteMany({mail:user.mail});
+            await Vista.deleteMany({mail:user.mail});
+            await OfertaAuto.deleteMany({mail:user.mail});
+            await Oferta.deleteMany({mail:user.mail});
             await Usuario.findByIdAndDelete(id);
         }else{
             await Admin.findByIdAndDelete(id);
