@@ -48,6 +48,28 @@ const tracking = async() =>{
                 campos.estado=1;
                 await Evento.findByIdAndUpdate(eventoDB[i]._id, campos,{new:true});         
                 console.log('Abriendo evento: '+eventoDB[i]._id);
+                let evlotDB = await EventoLote.find({uuid_evento:eventoDB[i].uuid}).sort({uuid_lote: -1});
+                for (let j = 0; j < evlotDB.length; j++) {
+                    let dateFin= new Date(Date.parse(eventoDB[i].fecha_cierre+' '+eventoDB[i].hora_cierre));
+                    dateFin.setMinutes(dateFin.getMinutes() + 2*(j+1))
+
+                    fecha_nueva=new Date(dateFin).toLocaleString("en-US", {timeZone: "America/Argentina/Buenos_Aires"}).split("/")                        
+                    hora_nueva=fecha_nueva[2].slice(6,14)
+                    fecha_nueva[2].slice(0,4)
+                    hora_nueva2 = hora_nueva.split(":")
+                    if(fecha_nueva[2][fecha_nueva[2].length-2]=='P'){                
+                        hora_nueva=(parseInt(hora_nueva2[0])+12)+":"+hora_nueva2[1]
+                    }else{
+                        hora_nueva=(hora_nueva2[0]=='12'?"00":hora_nueva2[0])+":"+hora_nueva2[1];
+                    }
+
+                    const loteDB = await Lote.find({uuid:evlotDB[j].uuid_lote})
+                    let {...campos}=loteDB[0];
+                    campos._doc.estado=1;
+                    campos._doc.hora_cierre=hora_nueva;
+                    campos._doc.fecha_cierre=fecha_nueva[2].slice(0,4)+'-'+fecha_nueva[0]+'-'+fecha_nueva[1];
+                    await Lote.findByIdAndUpdate(loteDB[0]._id, campos,{new:true});             
+                }
                 const userDB = await Usuario.find({$or: [{grupo: eventoDB[i].grupo}, {grupo: 'general'}]})
                 for (let j = 0; j < userDB.length; j++) {
                     notificarApertura(userDB[j].mail,userDB[j].nombre,eventoDB[i].nombre,eventoDB[i].fecha_cierre,eventoDB[i].hora_cierre,eventoDB[i].uuid)
@@ -63,53 +85,63 @@ const tracking = async() =>{
 
         for (let i = 0; i < eventoDB2.length; i++) {
             if(eventoDB2[i].hora_cierre<=hora && eventoDB2[i].estado==1){
-                let {...campos}=eventoDB2[i];        
-                campos.estado=2;
-                await Evento.findByIdAndUpdate(eventoDB2[i]._id, campos,{new:true});         
-                console.log('Cerrando evento: '+eventoDB2[i]._id);
-                //await Favorito.deleteMany({uuid_evento:eventoDB2[i].uuid});
-                await OfertaAuto.deleteMany({uuid_evento:eventoDB2[i].uuid});
+                let flagLotes=true;                
 
                 const eventoloteDB = await EventoLote.find({uuid_evento:eventoDB2[i].uuid})
                 for (let j = 0; j < eventoloteDB.length; j++) {
                     const loteDB = await Lote.find({uuid:eventoloteDB[j].uuid_lote})
                     const ofertaDB = await Oferta.find({uuid_lote:eventoloteDB[j].uuid_lote}).sort({cantidad:-1}).limit(1)
                     
-                    if(ofertaDB[0] && loteDB[0]){
+                    if(loteDB[0].estado==1) flagLotes=false;
+                    
+                    if(/*ofertaDB[0] && loteDB[0] && */(loteDB[0].hora_cierre<=hora && loteDB[0].estado==1)){
                         let {...campos}=loteDB[0];        
-                        campos._doc.ganador=ofertaDB[0].mail;
-                        campos._doc.precio_ganador=ofertaDB[0].cantidad;
+                        campos._doc.estado=2;
+                        if(ofertaDB[0]){
+                            campos._doc.ganador=ofertaDB[0].mail;
+                            campos._doc.precio_ganador=ofertaDB[0].cantidad;
+                        }
                         await Lote.findByIdAndUpdate(loteDB[0]._id, campos,{new:true});             
+                        console.log('Cerrando lote: '+loteDB[0]._id);
                     }
                 }
 
-                const userDB = await Usuario.aggregate([
-                    { $match:  {$or: [{grupo: eventoDB2[i].grupo}, {grupo: 'general'}]} },
-                    { $lookup: {
-                        from: "ofertas",
-                        localField: "mail",
-                        foreignField: "mail",
-                        "pipeline": [ { $group: { _id: "$uuid_lote", oferta: { $max: "$cantidad" } } } ],
-                        as: "oferta",
-                    } },
-                ]);
+                if(flagLotes){
+                    let {...campos}=eventoDB2[i];        
+                    campos.estado=2;
+                    await Evento.findByIdAndUpdate(eventoDB2[i]._id, campos,{new:true});         
+                    console.log('Cerrando evento: '+eventoDB2[i]._id);
+                    //await Favorito.deleteMany({uuid_evento:eventoDB2[i].uuid});
+                    await OfertaAuto.deleteMany({uuid_evento:eventoDB2[i].uuid});
 
-                for (let x = 0; x < userDB.length; x++) {
-                    let resultado=[]                    
-                    if(userDB[x].oferta.length>0){
-                        for (let x2 = 0; x2 < userDB[x].oferta.length; x2++) {
-                        const ofertaDB = await Lote.aggregate([
-                            { $match: { uuid: userDB[x].oferta[x2]._id} },
-                            { $project: {
-                                __v: 0,
-                                "aclaracion": 0,    "base_salida": 0,   "__v": 0,                   "_id": 0,
-                                "descripcion": 0,   "disponible": 0,    "incremento": 0,            "moneda": 0,
-                                "precio_base": 0,   "precio_salida": 0, "terminos_condiciones": 0
-                            } },
-                        ]);
-                        resultado.push(ofertaDB[0])
-                        }                    
-                        notificarCierre(userDB[x].mail,userDB[x].nombre,eventoDB2[i].nombre,userDB[x].oferta,resultado)
+                    const userDB = await Usuario.aggregate([
+                        { $match:  {$or: [{grupo: eventoDB2[i].grupo}, {grupo: 'general'}]} },
+                        { $lookup: {
+                            from: "ofertas",
+                            localField: "mail",
+                            foreignField: "mail",
+                            "pipeline": [ { $group: { _id: "$uuid_lote", oferta: { $max: "$cantidad" } } } ],
+                            as: "oferta",
+                        } },
+                    ]);
+
+                    for (let x = 0; x < userDB.length; x++) {
+                        let resultado=[]                    
+                        if(userDB[x].oferta.length>0){
+                            for (let x2 = 0; x2 < userDB[x].oferta.length; x2++) {
+                            const ofertaDB = await Lote.aggregate([
+                                { $match: { uuid: userDB[x].oferta[x2]._id} },
+                                { $project: {
+                                    __v: 0,
+                                    "aclaracion": 0,    "base_salida": 0,   "__v": 0,                   "_id": 0,
+                                    "descripcion": 0,   "disponible": 0,    "incremento": 0,            "moneda": 0,
+                                    "precio_base": 0,   "precio_salida": 0, "terminos_condiciones": 0
+                                } },
+                            ]);
+                            resultado.push(ofertaDB[0])
+                            }                    
+                            notificarCierre(userDB[x].mail,userDB[x].nombre,eventoDB2[i].nombre,userDB[x].oferta,resultado)
+                        }
                     }
                 }
             }        

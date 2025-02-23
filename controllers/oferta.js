@@ -12,7 +12,8 @@ const { sendMessage } = require('../helpers/socket-io');
 const checkCierre= async(evento,lote) =>{
     try {
         const eventoDB = await Evento.find({uuid: evento});
-        let dateFin= new Date(Date.parse(eventoDB[0].fecha_cierre+' '+eventoDB[0].hora_cierre));
+        const loteDB = await Lote.find({uuid: lote});
+        let dateFin= new Date(Date.parse(loteDB[0].fecha_cierre+' '+loteDB[0].hora_cierre));
         let dateHoy= new Date();
 
         const milliDiff = (dateHoy.getTime()- dateFin.getTime())*-1;
@@ -25,22 +26,29 @@ const checkCierre= async(evento,lote) =>{
         let remHours = totalHours % 24;
 
         if(totalDays==0 && remHours==0 && remMinutes<=4){
-            dateFin.setMinutes(dateFin.getMinutes() + eventoDB[0].segundos_cierre/60)
-            fecha_nueva=new Date(dateFin).toLocaleString("en-US", {timeZone: "America/Argentina/Buenos_Aires"}).split("/")                        
-            hora_nueva=fecha_nueva[2].slice(6,14)
-            fecha_nueva[2].slice(0,4)
-            hora_nueva2 = hora_nueva.split(":")
-            if(fecha_nueva[2][fecha_nueva[2].length-2]=='P'){                
-                hora_nueva=(parseInt(hora_nueva2[0])+12)+":"+hora_nueva2[1]
-            }else{
-                hora_nueva=(hora_nueva2[0]=='12'?"00":hora_nueva2[0])+":"+hora_nueva2[1];
-            }
+            const eventoLoteDB = await EventoLote.find({uuid_evento: evento});
+            for (let i = 0; i < eventoLoteDB.length; i++) {
+                const lote2DB = await Lote.find({uuid: eventoLoteDB[i].uuid_lote});
+                if(lote2DB[0].estado==1){
+                    let dateFin2= new Date(Date.parse(lote2DB[0].fecha_cierre+' '+lote2DB[0].hora_cierre));
+                    dateFin2.setMinutes(dateFin2.getMinutes() + eventoDB[0].segundos_cierre/60)
+                    fecha_nueva=new Date(dateFin2).toLocaleString("en-US", {timeZone: "America/Argentina/Buenos_Aires"}).split("/")                        
+                    hora_nueva=fecha_nueva[2].slice(6,14)
+                    fecha_nueva[2].slice(0,4)
+                    hora_nueva2 = hora_nueva.split(":")
+                    if(fecha_nueva[2][fecha_nueva[2].length-2]=='P'){                
+                        hora_nueva=(parseInt(hora_nueva2[0])+12)+":"+hora_nueva2[1]
+                    }else{
+                        hora_nueva=(hora_nueva2[0]=='12'?"00":hora_nueva2[0])+":"+hora_nueva2[1];
+                    }
 
-            let {...campos}=eventoDB[0];        
-            campos._doc.hora_cierre=hora_nueva;
-            campos._doc.fecha_cierre=fecha_nueva[2].slice(0,4)+'-'+fecha_nueva[0]+'-'+fecha_nueva[1];    
-                            
-            await Evento.findByIdAndUpdate(eventoDB[0]._id, campos,{new:true});  
+                    let {...campos}=lote2DB[0];        
+                    campos._doc.hora_cierre=hora_nueva;
+                    campos._doc.fecha_cierre=fecha_nueva[2].slice(0,4)+'-'+fecha_nueva[0]+'-'+fecha_nueva[1];    
+                                    
+                    await Lote.findByIdAndUpdate(lote2DB[0]._id, campos,{new:true});
+                }
+            }
         }
         const ofertaDB = await Oferta.aggregate([
             { "$match": { uuid_lote: lote } },
@@ -61,19 +69,29 @@ const checkCierre= async(evento,lote) =>{
             } },
             {$unwind: { path: "$user", preserveNullAndEmptyArrays: true }},
             { $lookup: {
-                from: "eventos",
+                from: "eventolotes",
                 localField: "uuid_evento",
-                foreignField: "uuid",
-                as: "evento"
+                foreignField: "uuid_evento",
+                as: "eventolotes",
+                pipeline: [
+                    { $lookup: {
+                        from: "lotes",
+                        localField: "uuid_lote",
+                        foreignField: "uuid",
+                        as: "lote",
+                    } },
+                    {$unwind: { path: "$lote", preserveNullAndEmptyArrays: true }},
+                    { $project: {
+                        __v: 0,
+                        "lote.aclaracion": 0,    "lote.base_salida": 0,   "lote.estado": 0,                  "lote.__v": 0,         "lote._id": 0,
+                        "lote.descripcion": 0,   "lote.disponible": 0,    "lote.incremento": 0,            "lote.moneda": 0,"lote.titulo": 0,
+                        "lote.precio_base": 0,   "lote.precio_salida": 0, "lote.terminos_condiciones": 0 , "lote.visitas": 0,"lote.ganador": 0,"lote.precio_ganador": 0
+                    } },
+                ],
             } },
-            {$unwind: { path: "$evento", preserveNullAndEmptyArrays: true }},
             { $project: {
                 __v: 0,
-                "evento._id": 0,                "evento.__v": 0,                "evento.categoria":0,           "evento.fecha_inicio":0,    "evento.nombre":0,
-                /*"evento.fecha_cierre":0,*/    "evento.hora_inicio":0,         /*"evento.hora_cierre":0,*/     "evento.segundos_cierre":0, "evento.estado":0,
-                "evento.modalidad":0,           "evento.publicar_cierre":0,     "evento.inicio_automatico":0,   "evento.mostrar_precio":0,
-                "evento.mostrar_ganadores":0,   "evento.mostrar_ofertas":0,     "evento.grupo":0,               "evento.home":0,
-                "evento.eventos":0,             "evento.visitas":0,             /*"evento.estado":0,*/          "evento.uuid":0,
+                "eventolotes._id": 0, "eventolotes.__v": 0,   "eventolotes.uuid_evento":0, "eventolotes.uuid_lote":0
             } },
             { "$sort": { cantidad: -1 } },
         ]);
@@ -114,8 +132,8 @@ const setOfertaA= async(req,res = response) =>{
         if(await isAdmin2(req.uid)==2){
             const {evento, lote, cantidad} = req.body
             const userDB = await Usuario.findById(req.uid);
-            const eventoDB = await Evento.find({uuid:evento});
-            if(eventoDB[0].estado!=1){
+            const loteDB = await Lote.find({uuid:lote});
+            if(loteDB[0].estado!=1){
                 res.json({
                     ok:false,
                 });
@@ -296,8 +314,8 @@ const ofertar= async(req,res = response) =>{
     try {
         if(await isAdmin2(req.uid)==2){
             const {cantidad, evento, lote} = req.body
-            const eventoDB = await Evento.find({uuid: evento});
-            if(eventoDB[0] && eventoDB[0].estado==1){
+            const loteDB = await Lote.find({uuid: lote});
+            if(loteDB[0] && loteDB[0].estado==1){
                 const eventoLoteDB = await EventoLote.find({uuid_evento: evento, uuid_lote: lote});
                 /*{ $and: [ { uuid_evento: evento }, { uuid_lote: lote } ] }*/
                 if(eventoLoteDB[0]){
@@ -328,7 +346,7 @@ const ofertar= async(req,res = response) =>{
             }else if(eventoDB[0] && eventoDB[0].estado==2){
                 res.json({
                     ok:false,
-                    msg: 'El evento ha finalizado'
+                    msg: 'El lote ha finalizado'
                 });
                 return;
             }
