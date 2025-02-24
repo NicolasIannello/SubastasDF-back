@@ -272,6 +272,7 @@ const getDatos= async(req,res = response) =>{
             });
             return;
         }else if(flag!=3){
+            const userDB = await Usuario.findById(req.uid)
             const {evento, lote} = req.body
             const loteDB = await Lote.find({uuid: lote});
             let {...campos}=loteDB[0];            
@@ -280,14 +281,19 @@ const getDatos= async(req,res = response) =>{
             const eventoDB = await Evento.find({uuid: evento});
             let cantidad=null;
             let precio=null;
-            let ganador=null
-            if(eventoDB[0]){
+            let ganador=null;
+            const ofertaUser = await Oferta.find({uuid_evento: evento, uuid_lote: lote, mail: userDB.mail}).limit(1);
+            if(!ofertaUser[0] && loteDB[0].estado==2){
+                cantidad= 'No ha participado en el lote';
+                precio= 'No ha participado en el lote';
+                ganador= 'No ha participado en el lote';
+            }else if(eventoDB[0]){
                 const ofertaDB = await Oferta.find({uuid_evento: evento, uuid_lote: lote}).sort({cantidad:-1});
                 if(ofertaDB[0]){
-                    const userDB = await Usuario.find({mail: ofertaDB[0].mail});
+                    //const userDB = await Usuario.find({mail: ofertaDB[0].mail});
                     if(eventoDB[0].mostrar_ofertas) cantidad = ofertaDB.length;
                     if(eventoDB[0].mostrar_precio) precio = ofertaDB[0].cantidad;
-                    if(eventoDB[0].mostrar_ganadores) ganador = userDB[0]._id;    
+                    if(eventoDB[0].mostrar_ganadores) ganador = userDB._id;    
                 }
             }
             res.json({
