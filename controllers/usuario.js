@@ -127,6 +127,7 @@ const renewToken= async(req,res=response)=>{
         res.json({
             ok:false
         })
+        return;
     }else{        
         const {...campos}=usuarioDB;
         campos._doc.ultima_conexion=timeNow();
@@ -265,6 +266,7 @@ const validarCuenta= async(req,res=response)=>{
         res.json({
             ok:false
         })
+        return;
     }else{
         const {validado, ...campos}=usuarioDB;
         campos._doc.validado=true;
@@ -305,6 +307,7 @@ const cambiarPass= async(req,res=response)=>{
         res.json({
             ok:false
         })
+        return;
     }else if(usuarioDB.mail==mail[0]){
         const {validado, ...campos}=usuarioDB;
         const salt=bcrypt.genSaltSync();

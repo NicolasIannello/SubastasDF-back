@@ -10,6 +10,7 @@ const actualizarWeb= async(req,res=response)=>{
         res.json({
             ok:false
         })
+        return;
     }else{        
         const web1= await Web.find({id:campo1.id});
         const web2= await Web.find({id:campo2.id});
