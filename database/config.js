@@ -120,27 +120,30 @@ const tracking = async() =>{
                             from: "ofertas",
                             localField: "mail",
                             foreignField: "mail",
-                            "pipeline": [ { $group: { _id: "$uuid_lote", oferta: { $max: "$cantidad" } } } ],
+                            "pipeline": [ 
+                                { $match: { uuid_evento: eventoDB2[i].uuid } },
+                                { $group: { _id: "$uuid_lote", uuid_lote : { $first: '$uuid_lote' }, oferta: { $max: "$cantidad" } } },
+                                { $lookup: {
+                                    from: "lotes",
+                                    localField: "uuid_lote",
+                                    foreignField: "uuid",
+                                    as: "lote",
+                                } },
+                                { $project: {
+                                    __v: 0,
+                                    "lote.aclaracion": 0,    "lote.base_salida": 0,   "lote.__v": 0,                   "lote._id": 0,
+                                    "lote.descripcion": 0,   "lote.disponible": 0,    "lote.incremento": 0,            "lote.moneda": 0,
+                                    "lote.precio_base": 0,   "lote.precio_salida": 0, "lote.terminos_condiciones": 0,
+                                    "lote.visitas": 0,"lote.estado": 0,"lote.fecha_cierre": 0,"lote.hora_cierre": 0
+                                } },
+                            ],
                             as: "oferta",
                         } },
                     ]);
 
-                    for (let x = 0; x < userDB.length; x++) {
-                        let resultado=[]                    
-                        if(userDB[x].oferta.length>0){
-                            for (let x2 = 0; x2 < userDB[x].oferta.length; x2++) {
-                            const ofertaDB = await Lote.aggregate([
-                                { $match: { uuid: userDB[x].oferta[x2]._id} },
-                                { $project: {
-                                    __v: 0,
-                                    "aclaracion": 0,    "base_salida": 0,   "__v": 0,                   "_id": 0,
-                                    "descripcion": 0,   "disponible": 0,    "incremento": 0,            "moneda": 0,
-                                    "precio_base": 0,   "precio_salida": 0, "terminos_condiciones": 0
-                                } },
-                            ]);
-                            resultado.push(ofertaDB[0])
-                            }                    
-                            notificarCierre(userDB[x].mail,userDB[x].nombre,eventoDB2[i].nombre,userDB[x].oferta,resultado)
+                    for (let j = 0; j < userDB.length; j++) {
+                        if(userDB[j].oferta.length>0){
+                            notificarCierre(userDB[j].mail,userDB[j].nombre,eventoDB2[i].nombre,userDB[j].oferta)
                         }
                     }
                 }
@@ -184,7 +187,7 @@ const notificarApertura= async(mail,nombre,evento,fecha,hora,id)=>{
     return true;
 };
 
-const notificarCierre= async(mail,nombre,evento,ofertas,resultado)=>{
+const notificarCierre= async(mail,nombre,evento,ofertas)=>{
     const transporter = nodemailer.createTransport({
         maxConnections: 1,
         pool: true,
@@ -200,14 +203,8 @@ const notificarCierre= async(mail,nombre,evento,ofertas,resultado)=>{
     let htmlMsg="Hola "+nombre+"!.<br>Estos han sido los resultados del evento: "+evento+".<br>Lotes ofertados:<br>";
 
     for (let i = 0; i < ofertas.length; i++) {
-        textMsg+="Lote: "+resultado[i].titulo+":\nOferta ganadora: "+resultado[i].precio_ganador;
-        htmlMsg+="Lote: "+resultado[i].titulo+":<br>Oferta ganadora: "+resultado[i].precio_ganador;
-        for (let j = 0; j < ofertas.length; j++) {
-            if(resultado[i].uuid==ofertas[j]._id) {
-                textMsg+="\nSu mayor oferta: "+ofertas[j].oferta+"\n\n";
-                htmlMsg+="<br>Su mayor oferta: "+ofertas[j].oferta+"<br><br>";
-            }
-        }
+        textMsg+="Lote: "+ofertas[i].lote[0].titulo+":\nOferta ganadora: "+ofertas[i].lote[0].precio_ganador+"\nSu mayor oferta: "+ofertas[i].oferta+"\n\n";
+        htmlMsg+="Lote: "+ofertas[i].lote[0].titulo+":<br>Oferta ganadora: "+ofertas[i].lote[0].precio_ganador+"<br>Su mayor oferta: "+ofertas[i].oferta+"<br><br>";
     }
     textMsg+="\nSaludamos muy atentamente."+"\nEquipo de Gruppo DF - Soluciones para el tratamiento de sus bienes"
     htmlMsg+="<br>Saludamos muy atentamente."+"<br>Equipo de Gruppo DF - Soluciones para el tratamiento de sus bienes"
