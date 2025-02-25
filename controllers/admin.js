@@ -7,6 +7,7 @@ const Empresa = require('../models/empresa');
 const Lote = require('../models/lote');
 const Evento = require('../models/evento');
 const Oferta = require('../models/oferta');
+const nodemailer = require("nodemailer");
 
 const login=async(req,res=response)=>{
     const { user, pass }= req.body;
@@ -53,6 +54,7 @@ const renewToken= async(req,res=response)=>{
         res.json({
             ok:false
         })
+        return;
     }else{
         res.json({
             ok:true,
@@ -75,6 +77,7 @@ const getUsers= async(req,res=response) =>{
         res.json({
             ok:false
         })
+        return;
     }
 
     const [ users, total ]= await Promise.all([
@@ -121,6 +124,7 @@ const deleteUser=async(req,res=response) =>{
             res.json({
                 ok:false
             })
+            return;
         }
         
         if(tipo=="user"){
@@ -159,6 +163,7 @@ const actualizarUser= async(req,res=response)=>{
         res.json({
             ok:false
         })
+        return;
     }else{
         const usuarioDB= await Usuario.findById(id);
         const empresaDB= await Empresa.find({mail:usuarioDB.mail});
@@ -208,6 +213,7 @@ const crearAdmin= async(req,res = response) =>{
             res.json({
                 ok:false
             })
+            return;
         }
 
         const existeAdmin= await Admin.findOne({usuario});
@@ -244,6 +250,7 @@ const getAdmins= async(req,res = response) =>{
             res.json({
                 ok:false
             })
+            return;
         }
 
         const [ admins, total ]= await Promise.all([
@@ -288,6 +295,7 @@ const buscarDato= async(req,res=response) =>{
         res.json({
             ok:false
         })
+        return;
     }
     let busqueda
     if(user=='lote'){        
@@ -346,6 +354,7 @@ const excelUsuarios= async(req,res=response) =>{
         res.json({
             ok:false
         })
+        return;
     }
 
     const busqueda= await Usuario.aggregate([
@@ -409,4 +418,48 @@ const isAdmin2 = async(id)=>{
     return 1;
 }
 
-module.exports={ login, renewToken, getUsers, deleteUser, actualizarUser, crearAdmin, buscarDato, excelUsuarios, getAdmins, isAdmin, isAdmin2 }
+const comunicar= async(req,res=response) =>{
+    const adminDB= await Admin.findById(req.uid)    
+    if(!adminDB){
+        res.json({
+            ok:false
+        })
+        return;
+    }
+
+    const userDB = await Usuario.find();
+
+    for (let i = 0; i < userDB.length; i++) {
+        const transporter = nodemailer.createTransport({
+            maxConnections: 1,
+            pool: true,
+            host: process.env.MSERVICE,
+            port: 465,
+            secure: true,
+            auth: {
+                user: 'contacto@gruppodf.com.ar',
+                pass: process.env.MPASS
+            }
+        });
+
+        await transporter.sendMail({
+            from: '"Gruppo DF Subastas" <contacto@gruppodf.com.ar>',
+            to: userDB[i].mail,
+            subject: req.body.asunto,
+            text: req.body.texto,
+            html: req.body.texto2,
+        }, function(error, info){
+            if (error) {
+                console.log(error);
+                return false;
+            }
+        });
+    }
+    
+    
+    res.json({
+        ok:true,
+    });
+}
+
+module.exports={ login, renewToken, getUsers, deleteUser, actualizarUser, crearAdmin, buscarDato, excelUsuarios, getAdmins, isAdmin, isAdmin2, comunicar }
