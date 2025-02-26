@@ -293,7 +293,8 @@ const getDatos= async(req,res = response) =>{
                     //const userDB = await Usuario.find({mail: ofertaDB[0].mail});
                     if(eventoDB[0].mostrar_ofertas) cantidad = ofertaDB.length;
                     if(eventoDB[0].mostrar_precio) precio = ofertaDB[0].cantidad;
-                    if(eventoDB[0].mostrar_ganadores) ganador = userDB._id;    
+                    const userDBganador = await Usuario.find({mail:ofertaDB[0].mail})
+                    if(eventoDB[0].mostrar_ganadores) ganador = userDBganador[0]._id;    
                 }
             }
             res.json({
