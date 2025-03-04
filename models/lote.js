@@ -3,7 +3,8 @@ const { Schema, model } = require('mongoose');
 const LoteSchema = Schema({
     uuid: { type: String, required: true },
     titulo: { type: String, required: true },
-    descripcion: { type: String, required: true },
+    descripcion: { type: String },
+    informacion: { type: String },
     moneda: { type: String, required: true },
     precio_base: { type: String, required: true },
     incremento: { type: String, required: true },

@@ -11,7 +11,6 @@ router.use(expressFileUpload());
 
 router.post('/crearLote', [
     check('titulo','el campo es obligatorio').not().isEmpty(),
-    check('descripcion','el campo es obligatorio').not().isEmpty(),
     check('moneda','el campo es obligatorio').not().isEmpty(),
     check('precio_base','el campo es obligatorio').not().isEmpty(),
     check('incremento','el campo es obligatorio').not().isEmpty(),
