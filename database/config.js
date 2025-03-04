@@ -32,10 +32,9 @@ const tracking = async() =>{
         let month=("0" + (date_time.getMonth() + 1)).slice(-2);
         let year=date_time.getFullYear();
         let fecha=year+"-"+month+"-"+date;
-        let hours=date_time.getHours();
-        let minutes=date_time.getMinutes();    
-        let hora = hours+':'+(minutes.toString().length==1 ? '0'+minutes : minutes);
-        
+        let hours=("0" + date_time.getHours()).slice(-2);//date_time.getHours();        
+        let minutes=("0" + date_time.getMinutes()).slice(-2);//date_time.getMinutes();    
+        let hora = hours+':'+minutes//.toString().length==1 ? '0'+minutes : minutes);        
         const eventoDB = await Evento.aggregate([
             { $project: { __v: 0, } },
             { "$match": {"fecha_inicio" : { $lte : fecha }} },
@@ -53,15 +52,15 @@ const tracking = async() =>{
                     let dateFin= new Date(Date.parse(eventoDB[i].fecha_cierre+' '+eventoDB[i].hora_cierre));
                     dateFin.setMinutes(dateFin.getMinutes() + 2*(j+1))
 
-                    fecha_nueva=new Date(dateFin).toLocaleString("en-US", {timeZone: "America/Argentina/Buenos_Aires"}).split("/")                        
+                    fecha_nueva=new Date(dateFin).toLocaleString("en-US", {timeZone: "America/Argentina/Buenos_Aires", hour12: false}).split("/");
                     hora_nueva=fecha_nueva[2].slice(6,14)
                     fecha_nueva[2].slice(0,4)
                     hora_nueva2 = hora_nueva.split(":")
-                    if(fecha_nueva[2][fecha_nueva[2].length-2]=='P'){                
-                        hora_nueva=(parseInt(hora_nueva2[0])+12)+":"+hora_nueva2[1]
-                    }else{
-                        hora_nueva=(hora_nueva2[0]=='12'?"00":hora_nueva2[0])+":"+hora_nueva2[1];
-                    }
+                    // if(fecha_nueva[2][fecha_nueva[2].length-2]=='P'){                
+                    //     hora_nueva=(parseInt(hora_nueva2[0])+12)+":"+hora_nueva2[1]
+                    // }else{
+                        hora_nueva=(hora_nueva2[0]=='24'?"00":hora_nueva2[0])+":"+hora_nueva2[1];
+                    // }
 
                     const loteDB = await Lote.find({uuid:evlotDB[j].uuid_lote})
                     let {...campos}=loteDB[0];
@@ -93,8 +92,8 @@ const tracking = async() =>{
                     const ofertaDB = await Oferta.find({uuid_lote:eventoloteDB[j].uuid_lote}).sort({cantidad:-1}).limit(1)
                     
                     if(loteDB[0].estado==1) flagLotes=false;
-                    
-                    if(/*ofertaDB[0] && loteDB[0] && */(loteDB[0].hora_cierre<=hora && loteDB[0].estado==1)){
+                    cierre= loteDB[0].hora_cierre.length==4 ? '0'+loteDB[0].hora_cierre : loteDB[0].hora_cierre;
+                    if(/*ofertaDB[0] && loteDB[0] && */(cierre<=hora && loteDB[0].estado==1)){
                         let {...campos}=loteDB[0];        
                         campos._doc.estado=2;
                         if(ofertaDB[0]){
