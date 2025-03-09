@@ -41,6 +41,7 @@ const crearLote= async(req,res = response) =>{
                 lote.ganador='';
                 lote.precio_ganador='';
                 lote.visitas=0;
+                lote.extension=true;
                 await lote.save();  
 
                 if(req.files['img'].length==undefined){
@@ -388,6 +389,7 @@ const duplicarLote= async(req,res = response) =>{
             lote.hora_cierre='';
             lote.fecha_cierre='';
             lote.estado=0;
+            lote.extension=true;
             await lote.save();
 
             for (let i = 0; i < imgDB.length; i++) {

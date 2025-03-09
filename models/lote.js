@@ -19,6 +19,7 @@ const LoteSchema = Schema({
     hora_cierre: { type: String },
     fecha_cierre: { type: String },
     estado: { type: Number },
+    extension: { type: Boolean, required: true },
 });
 
 LoteSchema.method('toJSON', function() {
