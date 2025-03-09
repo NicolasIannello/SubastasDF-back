@@ -26,11 +26,11 @@ const checkCierre= async(evento,lote) =>{
         let remHours = totalHours % 24;
 
         if(totalDays==0 && remHours==0 && remMinutes<=4){
-            const eventoLoteDB = await EventoLote.find({uuid_evento: evento});
-            for (let i = 0; i < eventoLoteDB.length; i++) {
-                const lote2DB = await Lote.find({uuid: eventoLoteDB[i].uuid_lote});
-                if(lote2DB[0].estado==1){
-                    let dateFin2= new Date(Date.parse(lote2DB[0].fecha_cierre+' '+lote2DB[0].hora_cierre));
+            //const eventoLoteDB = await EventoLote.find({uuid_evento: evento});
+            //for (let i = 0; i < eventoLoteDB.length; i++) {
+                //const lote2DB = await Lote.find({uuid: eventoLoteDB[i].uuid_lote});
+                if(loteDB[0].estado==1 && loteDB[0].extension){
+                    let dateFin2= new Date(Date.parse(loteDB[0].fecha_cierre+' '+loteDB[0].hora_cierre));
                     dateFin2.setMinutes(dateFin2.getMinutes() + eventoDB[0].segundos_cierre/60)
                     fecha_nueva=new Date(dateFin2).toLocaleString("en-US", {timeZone: "America/Argentina/Buenos_Aires"}).split("/")                        
                     hora_nueva=fecha_nueva[2].slice(6,14)
@@ -42,13 +42,14 @@ const checkCierre= async(evento,lote) =>{
                         hora_nueva=(hora_nueva2[0]=='12'?"00":hora_nueva2[0])+":"+hora_nueva2[1];
                     }
 
-                    let {...campos}=lote2DB[0];        
+                    let {...campos}=loteDB[0];        
                     campos._doc.hora_cierre=hora_nueva;
-                    campos._doc.fecha_cierre=fecha_nueva[2].slice(0,4)+'-'+fecha_nueva[0]+'-'+fecha_nueva[1];    
-                                    
-                    await Lote.findByIdAndUpdate(lote2DB[0]._id, campos,{new:true});
+                    campos._doc.fecha_cierre=fecha_nueva[2].slice(0,4)+'-'+(fecha_nueva[0].length==1 ? '0'+fecha_nueva[0] : fecha_nueva[0])+'-'+(fecha_nueva[1].length==1 ? '0'+fecha_nueva[1] : fecha_nueva[1]);  
+                    campos._doc.extension=false;
+
+                    await Lote.findByIdAndUpdate(loteDB[0]._id, campos,{new:true});
                 }
-            }
+            //}
         }
         const ofertaDB = await Oferta.aggregate([
             { "$match": { uuid_lote: lote } },
@@ -428,7 +429,7 @@ const getOfertas= async(req,res = response) =>{
                     "lote.descripcion": 0,   "lote.disponible": 0,    "lote.incremento": 0,            "lote.moneda": 0,
                     "lote.precio_base": 0,   "lote.precio_salida": 0, "lote.terminos_condiciones": 0, "lote.visitas": 0,"lote.ganador": 0,"lote.precio_ganador": 0
                 } },
-                { "$sort": { fecha: -1 } },
+                { "$sort": { _id: -1 } },
             ]);
 
             res.json({
