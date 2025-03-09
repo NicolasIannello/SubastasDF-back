@@ -429,6 +429,9 @@ const comunicar= async(req,res=response) =>{
 
     const userDB = await Usuario.find();
 
+    req.body.texto+="\nSaludamos muy atentamente."+"\nEquipo de Gruppo DF - Soluciones para el tratamiento de sus bienes"
+    req.body.texto2+="<br>Saludamos muy atentamente."+"<br>Equipo de Gruppo DF - Soluciones para el tratamiento de sus bienes"
+
     for (let i = 0; i < userDB.length; i++) {
         const transporter = nodemailer.createTransport({
             maxConnections: 1,
