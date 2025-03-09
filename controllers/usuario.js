@@ -172,7 +172,8 @@ const timeNow=()=>{
     let year=date_time.getFullYear();
     let hours=("0" + date_time.getHours()).slice(-2);//date_time.getHours();        
     let minutes=("0" + date_time.getMinutes()).slice(-2);//date_time.getMinutes();    
-    let fecha=date+"-"+month+"-"+year+" "+hours+":"+minutes;
+    //let fecha=date+"-"+month+"-"+year+" "+hours+":"+minutes;
+    let fecha=year+"-"+date+"-"+month+" "+hours+":"+minutes;
 
     return fecha;
 }
