@@ -170,8 +170,8 @@ const timeNow=()=>{
     let date=("0" + date_time.getDate()).slice(-2);
     let month=("0" + (date_time.getMonth() + 1)).slice(-2);
     let year=date_time.getFullYear();
-    let hours=date_time.getHours();
-    let minutes=date_time.getMinutes();
+    let hours=("0" + date_time.getHours()).slice(-2);//date_time.getHours();        
+    let minutes=("0" + date_time.getMinutes()).slice(-2);//date_time.getMinutes();    
     let fecha=date+"-"+month+"-"+year+" "+hours+":"+minutes;
 
     return fecha;
