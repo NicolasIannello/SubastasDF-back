@@ -8,6 +8,7 @@ const Lote = require('../models/lote');
 const Evento = require('../models/evento');
 const Oferta = require('../models/oferta');
 const nodemailer = require("nodemailer");
+const { notificarApertura } = require('../database/config');
 
 const login=async(req,res=response)=>{
     const { user, pass }= req.body;
@@ -465,4 +466,23 @@ const comunicar= async(req,res=response) =>{
     });
 }
 
-module.exports={ login, renewToken, getUsers, deleteUser, actualizarUser, crearAdmin, buscarDato, excelUsuarios, getAdmins, isAdmin, isAdmin2, comunicar }
+const reComunicado= async(req,res=response) =>{
+    const adminDB= await Admin.findById(req.uid)    
+    if(!adminDB){
+        res.json({
+            ok:false
+        })
+        return;
+    }
+
+    const userDB = await Usuario.find({$or: [{grupo: req.body.grupo}, {grupo: 'general'}]})
+    for (let j = 0; j < userDB.length; j++) {
+        notificarApertura(userDB[j].mail,userDB[j].nombre,req.body.nombre,req.body.fecha_cierre,req.body.hora_cierre,req.body.uuid)
+    }
+
+    res.json({
+        ok:true,
+    });
+}
+
+module.exports={ login, renewToken, getUsers, deleteUser, actualizarUser, crearAdmin, buscarDato, excelUsuarios, getAdmins, isAdmin, isAdmin2, comunicar, reComunicado }

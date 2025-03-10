@@ -2,7 +2,7 @@ const { Router }=require('express');
 const { check }=require('express-validator');
 const { validarCampos } = require('../middlewares/validar-campos');
 const { validarJWT } = require('../middlewares/validar-jwt');
-const { login, renewToken, getUsers, deleteUser, actualizarUser, crearAdmin, buscarDato, excelUsuarios, getAdmins, comunicar } = require('../controllers/admin');
+const { login, renewToken, getUsers, deleteUser, actualizarUser, crearAdmin, buscarDato, excelUsuarios, getAdmins, comunicar, reComunicado } = require('../controllers/admin');
 
 const router=Router();
 
@@ -77,5 +77,17 @@ router.post('/comunicar', [
     validarCampos,
     validarJWT
 ],comunicar);
+
+router.post('/recomunicar', [
+    check('token','el campo es obligatorio').not().isEmpty(),
+    check('tipo','el campo es obligatorio').not().isEmpty(),
+    check('grupo','el campo es obligatorio').not().isEmpty(),
+    check('nombre','el campo es obligatorio').not().isEmpty(),
+    check('fecha_cierre','el campo es obligatorio').not().isEmpty(),
+    check('hora_cierre','el campo es obligatorio').not().isEmpty(),
+    check('uuid','el campo es obligatorio').not().isEmpty(),
+    validarCampos,
+    validarJWT
+],reComunicado);
 
 module.exports=router;
