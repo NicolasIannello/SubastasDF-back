@@ -379,8 +379,12 @@ const getOfertas= async(req,res = response) =>{
         if(flag==2){
             const userDB = await Usuario.findById(req.uid)
 
+            var matchOperator={ "$match": { 'uuid_lote': { $exists: true } } };    
+            matchOperator['$match']['uuid_lote'] = (req.body.lote=='' ? { $exists: true } : req.body.lote);
+
             const ofertaDB = await Oferta.aggregate([
                 { "$match": { mail: userDB.mail } },
+                matchOperator,
                 { $project: { __v: 0, "__v": 0,} },
                 { $lookup: {
                     from: "eventos",
@@ -432,9 +436,32 @@ const getOfertas= async(req,res = response) =>{
                 { "$sort": { _id: -1 } },
             ]);
 
+            const lotesDB = await Oferta.aggregate([
+                { "$match": { mail: userDB.mail } },
+                { $project: { __v: 0, "__v": 0, 'mail':0, 'uuid_evento':0, 'cantidad':0, 'fecha':0, 'tipo':0,} },
+                { $lookup: {
+                    from: "lotes",
+                    localField: "uuid_lote",
+                    foreignField: "uuid",
+                    as: "lote",
+                    "pipeline": [ 
+                    ],
+                } },
+                {$unwind: { path: "$lote", preserveNullAndEmptyArrays: true }},
+                { $project: {
+                    __v: 0,
+                    "lote.aclaracion": 0,    "lote.base_salida": 0,     "lote.uuid": 0,              "lote.__v": 0,         "lote._id": 0, "lote.hora_cierre": 0, "lote.extension": 0,
+                    "lote.descripcion": 0,   "lote.disponible": 0,    "lote.incremento": 0,            "lote.moneda": 0, "lote.estado": 0, "lote.fecha_cierre": 0,
+                    "lote.precio_base": 0,   "lote.precio_salida": 0, "lote.terminos_condiciones": 0, "lote.visitas": 0,"lote.ganador": 0,"lote.precio_ganador": 0
+                } },
+                { $group: { _id: "$uuid_lote", titulo : { $first: '$lote.titulo' }} },
+                { "$sort": { _id: -1 } },
+            ]);
+
             res.json({
                 ok:true,
-                ofertaDB
+                ofertaDB,
+                lotesDB
             });
             return;
         }else{
