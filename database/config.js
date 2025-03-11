@@ -135,6 +135,16 @@ const tracking = async() =>{
                                     "lote.precio_base": 0,   "lote.precio_salida": 0, "lote.terminos_condiciones": 0,
                                     "lote.visitas": 0,"lote.estado": 0,"lote.fecha_cierre": 0,"lote.hora_cierre": 0
                                 } },
+                                { $lookup: {
+                                    from: "ofertas",
+                                    localField: "uuid_lote",
+                                    foreignField: "uuid_lote",
+                                    "pipeline": [ 
+                                        { $group: { _id: "$mail", oferta: { $max: "$cantidad" } } },
+                                        { "$sort" : { "oferta" : -1 } },
+                                    ],
+                                    as: "puesto",
+                                } },
                             ],
                             as: "oferta",
                         } },
@@ -202,8 +212,14 @@ const notificarCierre= async(mail,nombre,evento,ofertas)=>{
     let htmlMsg="Hola "+nombre+"!.<br>Estos han sido los resultados del evento: "+evento+".<br>Lotes ofertados:<br>";
 
     for (let i = 0; i < ofertas.length; i++) {
-        textMsg+="Lote: "+ofertas[i].lote[0].titulo+":\nOferta ganadora: "+ofertas[i].lote[0].precio_ganador+"\nSu mayor oferta: "+ofertas[i].oferta+"\n\n";
-        htmlMsg+="Lote: "+ofertas[i].lote[0].titulo+":<br>Oferta ganadora: "+ofertas[i].lote[0].precio_ganador+"<br>Su mayor oferta: "+ofertas[i].oferta+"<br><br>";
+        textMsg+="Lote: "+ofertas[i].lote[0].titulo+":\nOferta ganadora: "+ofertas[i].lote[0].precio_ganador+"\nSu mayor oferta: "+ofertas[i].oferta+"\n";
+        htmlMsg+="Lote: "+ofertas[i].lote[0].titulo+":<br>Oferta ganadora: "+ofertas[i].lote[0].precio_ganador+"<br>Su mayor oferta: "+ofertas[i].oferta+"<br>";
+        for (let j = 0; j < ofertas[i].puesto.length; j++) {
+            if(ofertas[i].puesto[j]._id==mail){
+                textMsg+="Puesto: "+(j+1)+"\n\n";
+                htmlMsg+="Puesto: "+(j+1)+"<br><br>";    
+            }
+        }
     }
     textMsg+="\nSaludamos muy atentamente."+"\nEquipo de Gruppo DF - Soluciones para el tratamiento de sus bienes"
     htmlMsg+="<br>Saludamos muy atentamente."+"<br>Equipo de Gruppo DF - Soluciones para el tratamiento de sus bienes"
@@ -224,4 +240,4 @@ const notificarCierre= async(mail,nombre,evento,ofertas)=>{
     return true;
 };
 
-module.exports={dbConnection};
+module.exports={dbConnection, notificarApertura};
