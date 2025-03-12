@@ -64,6 +64,8 @@ const tracking = async() =>{
 
                     const loteDB = await Lote.find({uuid:evlotDB[j].uuid_lote})
                     let {...campos}=loteDB[0];
+                    campos._doc.ganador='';
+                    campos._doc.precio_ganador='';
                     campos._doc.estado=1;
                     campos._doc.hora_cierre=hora_nueva;
                     campos._doc.fecha_cierre=fecha_nueva[2].slice(0,4)+'-'+(fecha_nueva[0].length==1 ? '0'+fecha_nueva[0] : fecha_nueva[0])+'-'+(fecha_nueva[1].length==1 ? '0'+fecha_nueva[1] : fecha_nueva[1]);
