@@ -322,6 +322,7 @@ const ofertar= async(req,res = response) =>{
     try {
         if(await isAdmin2(req.uid)==2){
             const {cantidad, evento, lote} = req.body
+            const eventoDB = await Evento.find({uuid: evento});            
             const loteDB = await Lote.find({uuid: lote});
             if(loteDB[0] && loteDB[0].estado==1){
                 const eventoLoteDB = await EventoLote.find({uuid_evento: evento, uuid_lote: lote});
@@ -330,7 +331,77 @@ const ofertar= async(req,res = response) =>{
                     const userDB = await Usuario.findById(req.uid);
                     if(userDB){
                         const ofertaDB = await Oferta.find({uuid_evento: evento, uuid_lote: lote}).sort({cantidad:-1}).limit(1);
-                        if(!ofertaDB[0] || cantidad>ofertaDB[0].cantidad){
+                        if(eventoDB[0].modalidad=='Remate' && loteDB[0].precio_base<cantidad){
+                            const ofertaDB2 = await Oferta.find({mail: userDB.mail});
+                            if(ofertaDB2[0]){
+                                const {...campos}=ofertaDB2[0];
+                                campos._doc.cantidad=cantidad;
+                                campos._doc.fecha=timeNow();
+                                await Oferta.findByIdAndUpdate(ofertaDB2[0]._id, campos,{new:true});         
+                            }else{
+                                const oferta= new Oferta({mail: userDB.mail,cantidad: cantidad,uuid_evento: evento,uuid_lote: lote})
+                                oferta.fecha=timeNow();
+                                oferta.tipo='manual';
+                                await oferta.save();
+                            }
+                            const ofertaDB = await Oferta.find({uuid_evento: evento, uuid_lote: lote}).sort({cantidad:-1}).limit(1);
+
+                            if((ofertaDB[0] && cantidad>=ofertaDB[0].cantidad) || !ofertaDB[0]){
+                                const ofertaDato = await Oferta.aggregate([
+                                    { "$match": { uuid_lote: lote } },
+                                    { $project: { __v: 0, "__v": 0, "fecha": 0, "tipo": 0, "_id": 0 } },
+                                    { $lookup: {
+                                        from: "usuarios",
+                                        localField: "mail",
+                                        foreignField: "mail",
+                                        as: "user"
+                                    } },
+                                    { $project: {
+                                        __v: 0,
+                                        "user.__v": 0,              "user.actividad": 0,        "user.ciudad": 0,
+                                        "user.como_encontro": 0,    "user.domicilio": 0,        "user.grupo": 0,
+                                        "user.habilitado": 0,       "user.mail": 0,             "user.nombre": 0,       "user.pais": 0,
+                                        "user.pass": 0,             "user.postal": 0,           "user.provincia": 0,    "user.telefono": 0,
+                                        "user.tipo": 0,             "user.ultima_conexion":0,   "user.validado": 0,     "user.cuil_cuit": 0,
+                                    } },
+                                    {$unwind: { path: "$user", preserveNullAndEmptyArrays: true }},
+                                    { $lookup: {
+                                        from: "eventolotes",
+                                        localField: "uuid_evento",
+                                        foreignField: "uuid_evento",
+                                        as: "eventolotes",
+                                        pipeline: [
+                                            { $lookup: {
+                                                from: "lotes",
+                                                localField: "uuid_lote",
+                                                foreignField: "uuid",
+                                                as: "lote",
+                                            } },
+                                            {$unwind: { path: "$lote", preserveNullAndEmptyArrays: true }},
+                                            { $project: {
+                                                __v: 0,
+                                                "lote.aclaracion": 0,    "lote.base_salida": 0,   "lote.estado": 0,                  "lote.__v": 0,         "lote._id": 0,
+                                                "lote.descripcion": 0,   "lote.disponible": 0,    "lote.incremento": 0,            "lote.moneda": 0,"lote.titulo": 0,
+                                                "lote.precio_base": 0,   "lote.precio_salida": 0, "lote.terminos_condiciones": 0 , "lote.visitas": 0,"lote.ganador": 0,"lote.precio_ganador": 0
+                                            } },
+                                        ],
+                                    } },
+                                    { $project: {
+                                        __v: 0,
+                                        "eventolotes._id": 0, "eventolotes.__v": 0,   "eventolotes.uuid_evento":0, "eventolotes.uuid_lote":0
+                                    } },
+                                    { "$sort": { cantidad: -1 } },
+                                ]);
+                                ofertaDato[0].nro=ofertaDato.length;
+                                sendMessage(evento, "message", ofertaDato[0])
+                            }
+
+                            res.json({
+                                ok:true,
+                            });
+                            return;
+                        }else
+                        if((!ofertaDB[0] || cantidad>ofertaDB[0].cantidad) && eventoDB[0].modalidad=='Subasta'){
                             const oferta= new Oferta({mail: userDB.mail,cantidad: cantidad,uuid_evento: evento,uuid_lote: lote})
                             oferta.fecha=timeNow();
                             oferta.tipo='manual';
