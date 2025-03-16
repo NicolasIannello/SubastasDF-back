@@ -7,6 +7,10 @@ const Oferta = require('../models/oferta');
 const OfertaAuto = require('../models/oferta-auto');
 const nodemailer = require("nodemailer");
 const Usuario = require('../models/usuario');
+const Imagen = require('../models/imagen');
+const PDF = require('../models/pdf');
+const fs=require('fs');
+const Vista = require('../models/vista');
 
 mongoose.set('strictQuery', false);
 
@@ -73,7 +77,7 @@ const tracking = async() =>{
                 }
                 const userDB = await Usuario.find({$or: [{grupo: eventoDB[i].grupo}, {grupo: 'general'}]})
                 for (let j = 0; j < userDB.length; j++) {
-                    notificarApertura(userDB[j].mail,userDB[j].nombre,eventoDB[i].nombre,eventoDB[i].fecha_cierre,eventoDB[i].hora_cierre,eventoDB[i].uuid)
+                    if(process.env.NOTI=='true') notificarApertura(userDB[j].mail,userDB[j].nombre,eventoDB[i].nombre,eventoDB[i].fecha_cierre,eventoDB[i].hora_cierre,eventoDB[i].uuid)
                 }
             }        
         }
@@ -154,11 +158,62 @@ const tracking = async() =>{
 
                     for (let j = 0; j < userDB.length; j++) {
                         if(userDB[j].oferta.length>0){
-                            notificarCierre(userDB[j].mail,userDB[j].nombre,eventoDB2[i].nombre,userDB[j].oferta)
+                            if(process.env.NOTI=='true') notificarCierre(userDB[j].mail,userDB[j].nombre,eventoDB2[i].nombre,userDB[j].oferta)
                         }
                     }
                 }
-            }        
+            }
+        }
+
+        let tresMeses = new Date();
+        tresMeses.setMonth(tresMeses.getMonth()-3);
+        let tresMesesdate=("0" + tresMeses.getDate()).slice(-2);
+        let tresMesesmonth=("0" + (tresMeses.getMonth() + 1)).slice(-2);
+        let tresMesesyear=tresMeses.getFullYear();
+        let tresMesesfecha=tresMesesyear+"-"+tresMesesmonth+"-"+tresMesesdate;
+    
+        const lotesViejos= await Lote.find({ 'fecha_cierre': { $lt: tresMesesfecha } },);
+        const eventosViejos= await Evento.find({ 'fecha_cierre': { $lt: tresMesesfecha } },);        
+        if(lotesViejos){
+            for (let i = 0; i < lotesViejos.length; i++) {                
+                const imgDB = await Imagen.find({lote:lotesViejos[i].uuid})
+                const pdfDB = await PDF.find({pdf:lotesViejos[i].terminos_condiciones})
+                
+                if(pdfDB.length!=0){
+                    let pathPDF='./files/pdfs/'+pdfDB[0].pdf;
+                    if(fs.existsSync(pathPDF)) fs.unlinkSync(pathPDF);
+                    await PDF.findByIdAndDelete(pdfDB[0]._id);    
+                }
+                if(imgDB.length!=0){
+                    for (let i = 0; i < imgDB.length; i++) {
+                        let pathImg='./files/lotes/'+imgDB[i].img
+                        if(fs.existsSync(pathImg)) fs.unlinkSync(pathImg);
+                        await Imagen.findByIdAndDelete(imgDB[i]._id);
+                    }
+                }
+                await Oferta.deleteMany({uuid_lote:lotesViejos[i].uuid});
+                await Vista.deleteMany({uuid_lote:lotesViejos[i].uuid});
+                await OfertaAuto.deleteMany({uuid_lote:lotesViejos[i].uuid});
+                await EventoLote.deleteMany({uuid_lote:lotesViejos[i].uuid});
+                await Favorito.deleteMany({uuid_lote:lotesViejos[i].uuid});
+                await Lote.findByIdAndDelete(lotesViejos[i]._id);             
+            }
+        }
+        if(eventosViejos){
+            for (let i = 0; i < eventosViejos.length; i++) {
+                const imgDB = await Imagen.find({lote:eventosViejos[i].uuid})
+
+                if(imgDB.length!=0){
+                    for (let i = 0; i < imgDB.length; i++) {
+                        let pathImg='./files/eventos/'+imgDB[i].img
+                        if(fs.existsSync(pathImg)) fs.unlinkSync(pathImg);
+                        await Imagen.findByIdAndDelete(imgDB[i]._id);
+                    }
+                }
+                await Favorito.deleteMany({uuid_evento:eventosViejos[i].uuid});
+                await OfertaAuto.deleteMany({uuid_evento:eventosViejos[i].uuid});
+                await Evento.findByIdAndDelete(eventosViejos[i]._id);
+            }
         }
     }
 }
