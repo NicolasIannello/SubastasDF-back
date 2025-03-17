@@ -174,32 +174,34 @@ const tracking = async() =>{
     
         const lotesViejos= await Lote.find({ 'fecha_cierre': { $lt: tresMesesfecha } },);
         const eventosViejos= await Evento.find({ 'fecha_cierre': { $lt: tresMesesfecha } },);        
-        if(lotesViejos){
+        if(lotesViejos[0]){
             for (let i = 0; i < lotesViejos.length; i++) {                
-                const imgDB = await Imagen.find({lote:lotesViejos[i].uuid})
-                const pdfDB = await PDF.find({pdf:lotesViejos[i].terminos_condiciones})
-                
-                if(pdfDB.length!=0){
-                    let pathPDF='./files/pdfs/'+pdfDB[0].pdf;
-                    if(fs.existsSync(pathPDF)) fs.unlinkSync(pathPDF);
-                    await PDF.findByIdAndDelete(pdfDB[0]._id);    
-                }
-                if(imgDB.length!=0){
-                    for (let i = 0; i < imgDB.length; i++) {
-                        let pathImg='./files/lotes/'+imgDB[i].img
-                        if(fs.existsSync(pathImg)) fs.unlinkSync(pathImg);
-                        await Imagen.findByIdAndDelete(imgDB[i]._id);
+                if(lotesViejos[i].fecha_cierre!=''){
+                    const imgDB = await Imagen.find({lote:lotesViejos[i].uuid})
+                    const pdfDB = await PDF.find({pdf:lotesViejos[i].terminos_condiciones})
+                    
+                    if(pdfDB.length!=0){
+                        let pathPDF='./files/pdfs/'+pdfDB[0].pdf;
+                        if(fs.existsSync(pathPDF)) fs.unlinkSync(pathPDF);
+                        await PDF.findByIdAndDelete(pdfDB[0]._id);    
                     }
-                }
-                await Oferta.deleteMany({uuid_lote:lotesViejos[i].uuid});
-                await Vista.deleteMany({uuid_lote:lotesViejos[i].uuid});
-                await OfertaAuto.deleteMany({uuid_lote:lotesViejos[i].uuid});
-                await EventoLote.deleteMany({uuid_lote:lotesViejos[i].uuid});
-                await Favorito.deleteMany({uuid_lote:lotesViejos[i].uuid});
-                await Lote.findByIdAndDelete(lotesViejos[i]._id);             
+                    if(imgDB.length!=0){
+                        for (let i = 0; i < imgDB.length; i++) {
+                            let pathImg='./files/lotes/'+imgDB[i].img
+                            if(fs.existsSync(pathImg)) fs.unlinkSync(pathImg);
+                            await Imagen.findByIdAndDelete(imgDB[i]._id);
+                        }
+                    }
+                    await Oferta.deleteMany({uuid_lote:lotesViejos[i].uuid});
+                    await Vista.deleteMany({uuid_lote:lotesViejos[i].uuid});
+                    await OfertaAuto.deleteMany({uuid_lote:lotesViejos[i].uuid});
+                    await EventoLote.deleteMany({uuid_lote:lotesViejos[i].uuid});
+                    await Favorito.deleteMany({uuid_lote:lotesViejos[i].uuid});
+                    await Lote.findByIdAndDelete(lotesViejos[i]._id);  
+                }           
             }
         }
-        if(eventosViejos){
+        if(eventosViejos[0]){
             for (let i = 0; i < eventosViejos.length; i++) {
                 const imgDB = await Imagen.find({lote:eventosViejos[i].uuid})
 
