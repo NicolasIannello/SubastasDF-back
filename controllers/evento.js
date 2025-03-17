@@ -99,8 +99,18 @@ const agregarLotes= async(req,res = response) =>{
                 const {...campos}=loteDB[0];
                 campos._doc.disponible=false;
                 if(eventoDB[0].estado=1){
-                    campos._doc.hora_cierre=eventoDB[0].hora_cierre;
-                    campos._doc.fecha_cierre=eventoDB[0].fecha_cierre;
+                    const loteEventoDB2 = await EventoLote.find({uuid_evento: eventoDB[0].uuid})
+                    let dateFin= new Date(Date.parse(eventoDB[0].fecha_cierre+' '+eventoDB[0].hora_cierre));
+                    dateFin.setMinutes(dateFin.getMinutes() + 2*(loteEventoDB2.length))
+
+                    fecha_nueva=new Date(dateFin).toLocaleString("en-US", {timeZone: "America/Argentina/Buenos_Aires", hour12: false}).split("/");
+                    hora_nueva=fecha_nueva[2].slice(6,14)
+                    fecha_nueva[2].slice(0,4)
+                    hora_nueva2 = hora_nueva.split(":")
+                    hora_nueva=(hora_nueva2[0]=='24'?"00":hora_nueva2[0])+":"+hora_nueva2[1];
+
+                    campos._doc.hora_cierre=hora_nueva;
+                    campos._doc.fecha_cierre=fecha_nueva[2].slice(0,4)+'-'+(fecha_nueva[0].length==1 ? '0'+fecha_nueva[0] : fecha_nueva[0])+'-'+(fecha_nueva[1].length==1 ? '0'+fecha_nueva[1] : fecha_nueva[1]);
                     campos._doc.estado=1;
                 }
                 await Lote.findByIdAndUpdate(loteDB[0]._id, campos,{new:true}); 
