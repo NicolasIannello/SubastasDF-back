@@ -160,7 +160,7 @@ const getEvento= async(req,res = response) =>{
                 }
                 const userDB = await Usuario.findById(req.uid);        
                 matchOperator2['$match']['grupo'] = (userDB.grupo=='general'? { $exists: true } : userDB.grupo);
-                matchOperator3['$match']['modalidad'] = req.body.modalidad;
+                matchOperator3['$match']['modalidad'] = req.body.modalidad=='' ? { $exists: true } : req.body.modalidad;
                 break;
             case 3:
                 res.json({
