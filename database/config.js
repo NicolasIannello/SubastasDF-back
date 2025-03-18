@@ -54,7 +54,7 @@ const tracking = async() =>{
                 let evlotDB = await EventoLote.find({uuid_evento:eventoDB[i].uuid}).sort({uuid_lote: -1});
                 for (let j = 0; j < evlotDB.length; j++) {
                     let dateFin= new Date(Date.parse(eventoDB[i].fecha_cierre+' '+eventoDB[i].hora_cierre));
-                    dateFin.setMinutes(dateFin.getMinutes() + 2*(j+1))
+                    dateFin.setMinutes(dateFin.getMinutes() + (eventoDB[i].segundos_cierre/60)*(j+1))
 
                     fecha_nueva=new Date(dateFin).toLocaleString("en-US", {timeZone: "America/Argentina/Buenos_Aires", hour12: false}).split("/");
                     hora_nueva=fecha_nueva[2].slice(6,14)

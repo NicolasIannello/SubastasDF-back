@@ -101,7 +101,7 @@ const agregarLotes= async(req,res = response) =>{
                 if(eventoDB[0].estado=1){
                     const loteEventoDB2 = await EventoLote.find({uuid_evento: eventoDB[0].uuid})
                     let dateFin= new Date(Date.parse(eventoDB[0].fecha_cierre+' '+eventoDB[0].hora_cierre));
-                    dateFin.setMinutes(dateFin.getMinutes() + 2*(loteEventoDB2.length))
+                    dateFin.setMinutes(dateFin.getMinutes() + (eventoDB[0].segundos_cierre/60)*(loteEventoDB2.length))
 
                     fecha_nueva=new Date(dateFin).toLocaleString("en-US", {timeZone: "America/Argentina/Buenos_Aires", hour12: false}).split("/");
                     hora_nueva=fecha_nueva[2].slice(6,14)
