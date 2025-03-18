@@ -146,6 +146,7 @@ const getEvento= async(req,res = response) =>{
         var matchOperator = { "$match": { } };
         var matchOperator2={ "$match": { 'grupo': { $exists: true } } };
         var matchOperator3={ "$match": { 'modalidad': { $exists: true } } };  
+        var matchOperator4={ "$match": { 'estado': { $exists: true } } };  
 
         switch (await isAdmin2(req.uid)) {
             case 1:
@@ -161,6 +162,7 @@ const getEvento= async(req,res = response) =>{
                 const userDB = await Usuario.findById(req.uid);        
                 matchOperator2['$match']['grupo'] = (userDB.grupo=='general'? { $exists: true } : userDB.grupo);
                 matchOperator3['$match']['modalidad'] = req.body.modalidad=='' ? { $exists: true } : req.body.modalidad;
+                matchOperator4['$match']['estado'] = req.body.estado=='' ? { $exists: true } : req.body.estado;                
                 break;
             case 3:
                 res.json({
@@ -176,6 +178,7 @@ const getEvento= async(req,res = response) =>{
             matchOperator,
             matchOperator2,
             matchOperator3,
+            matchOperator4,
             { $project: { __v: 0, } },
             { $lookup: {
                 from: "eventolotes",
