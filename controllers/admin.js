@@ -9,6 +9,7 @@ const Evento = require('../models/evento');
 const Oferta = require('../models/oferta');
 const nodemailer = require("nodemailer");
 const { notificarApertura } = require('../database/config');
+const EventoLote = require('../models/evento-lote');
 
 const login=async(req,res=response)=>{
     const { user, pass }= req.body;
@@ -300,6 +301,50 @@ const buscarDato= async(req,res=response) =>{
     }
     let busqueda
     if(user=='lote'){        
+        if(tipo=='uuid_evento'){
+            busqueda= await EventoLote.aggregate([
+                regExOperator,
+                { $project: { __v: 0, "_id": 0, } },
+                { $lookup: {
+                    from: "lotes",
+                    localField: "uuid_lote",
+                    foreignField: "uuid",
+                    "pipeline": [ 
+                        { $lookup: {
+                            from: "ofertas",
+                            localField: "uuid",
+                            foreignField: "uuid_lote",
+                            "pipeline": [ 
+                                { "$sort" : { "cantidad" : -1 } },
+                                { "$limit" : 1 } 
+                            ],
+                            as: "oferta"
+                        } },
+                        {$unwind: { path: "$oferta", preserveNullAndEmptyArrays: true }},
+                        { $lookup: {
+                            from: "ofertas",
+                            localField: "uuid",
+                            foreignField: "uuid_lote",
+                            as: "ofertas",
+                            "pipeline": [
+                                {$facet: {
+                                    total:[{$group:{_id: null, count: {$sum: 1}}}]
+                                }}
+                            ]
+                        } },
+                        {$unwind: { path: "$ofertas", preserveNullAndEmptyArrays: true }},
+                    ],
+                    as: "lote"
+                } },
+                {$unwind: { path: "$lote", preserveNullAndEmptyArrays: true }},
+                { $project: {
+                    __v: 0,
+                    "lote.descripcion": 0,
+                    "lote.aclaracion": 0,
+                    "lote.terminos_condiciones": 0,
+                } },
+            ]).collation({locale: 'en'});
+        }else{
         busqueda= await Lote.aggregate([
             regExOperator,
             { $project: {
@@ -308,7 +353,44 @@ const buscarDato= async(req,res=response) =>{
                 "aclaracion": 0,
                 "terminos_condiciones": 0,
             } },
+            { $lookup: {
+                from: "ofertas",
+                localField: "uuid",
+                foreignField: "uuid_lote",
+                "pipeline": [ 
+                    { "$sort" : { "cantidad" : -1 } },
+                    { "$limit" : 1 } 
+                ],
+                as: "oferta"
+            } },
+            {$unwind: { path: "$oferta", preserveNullAndEmptyArrays: true }},
+            { $lookup: {
+                from: "ofertas",
+                localField: "uuid",
+                foreignField: "uuid_lote",
+                as: "ofertas",
+                "pipeline": [
+                    {$facet: {
+                        total:[{$group:{_id: null, count: {$sum: 1}}}]
+                    }}
+                ]
+            } },
+            {$unwind: { path: "$ofertas", preserveNullAndEmptyArrays: true }},
+            { $lookup: {
+                from: "eventolotes",
+                localField: "uuid",
+                foreignField: "uuid_lote",
+                as: "evento",
+            } },
+            {$unwind: { path: "$evento", preserveNullAndEmptyArrays: true }},
+            { $project: {
+                __v: 0,
+                "evento.uuid_lote": 0,
+                "evento._id": 0,
+                "evento.__v": 0,
+            } },
         ]).collation({locale: 'en'});
+        }
     }else if(user=='evento'){
         busqueda= await Evento.aggregate([
             regExOperator,
