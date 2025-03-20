@@ -332,8 +332,8 @@ const ofertar= async(req,res = response) =>{
                     if(userDB){
                         const ofertaDB = await Oferta.find({uuid_evento: evento, uuid_lote: lote}).sort({cantidad:-1}).limit(1);
                         if(eventoDB[0].modalidad=='Remate' && loteDB[0].precio_base<cantidad){
-                            const ofertaDB2 = await Oferta.find({mail: userDB.mail});
-                            if(ofertaDB2[0]){
+                            const ofertaDB2 = await Oferta.find({mail: userDB.mail, uuid_lote: lote});
+                            if(ofertaDB2[0]!=undefined){
                                 const {...campos}=ofertaDB2[0];
                                 campos._doc.cantidad=cantidad;
                                 campos._doc.fecha=timeNow();
