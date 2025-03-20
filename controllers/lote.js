@@ -13,6 +13,8 @@ const Usuario = require('../models/usuario');
 const Favorito = require('../models/favorito');
 const Oferta = require('../models/oferta');
 const favorito = require('../models/favorito');
+const Vista = require('../models/vista');
+const OfertaAuto = require('../models/oferta-auto');
 
 const crearLote= async(req,res = response) =>{
     try {
