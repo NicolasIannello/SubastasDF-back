@@ -237,11 +237,11 @@ const notificarApertura= async(mail,nombre,evento,fecha,hora,id)=>{
         from: '"Gruppo DF Subastas" <contacto@gruppodf.com.ar>',
         to: mail,
         subject: 'Invitacion a evento '+evento,
-        text: "Hola "+nombre+"!.\nHas sido invitado/a a participar de la subasta electrónica "+evento+".\n"+
+        text: "Hola "+nombre+"!.\nHas sido invitado/a a participar del evento: "+evento+".\n"+
         "Le recordamos que la fecha de cierre es el "+fecha+" a las "+hora+" hs.\nPara acceder y participar, puedes acceder desde aquí:\n"+
         process.env.LINK+'/evento/'+id+"Saludamos muy atentamente."+
         "\nEquipo de Gruppo DF - Soluciones para el tratamiento de sus bienes",
-        html: "Hola "+nombre+"!.<br>Has sido invitado/a a participar de la subasta electrónica "+evento+".<br>"+
+        html: "Hola "+nombre+"!.<br>Has sido invitado/a a participar del evento: "+evento+".<br>"+
         "Le recordamos que la fecha de cierre es el "+fecha+" a las "+hora+" hs.<br>Para acceder y participar, puedes acceder desde aquí:<br>"+
         process.env.LINK+'/evento/'+id+"<br>Saludamos muy atentamente."+
         "<br>Equipo de Gruppo DF - Soluciones para el tratamiento de sus bienes",
