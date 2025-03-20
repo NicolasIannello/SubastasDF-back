@@ -109,7 +109,26 @@ const getLotes= async(req,res = response) =>{
                     from: "ofertas",
                     localField: "uuid",
                     foreignField: "uuid_lote",
-                    as: "ofertas"
+                    as: "ofertas",
+                    "pipeline": [
+                        {$facet: {
+                            total:[{$group:{_id: null, count: {$sum: 1}}}]
+                        }}
+                    ]
+                } },
+                {$unwind: { path: "$ofertas", preserveNullAndEmptyArrays: true }},
+                { $lookup: {
+                    from: "eventolotes",
+                    localField: "uuid",
+                    foreignField: "uuid_lote",
+                    as: "evento",
+                } },
+                {$unwind: { path: "$evento", preserveNullAndEmptyArrays: true }},
+                { $project: {
+                    __v: 0,
+                    "evento.uuid_lote": 0,
+                    "evento._id": 0,
+                    "evento.__v": 0,
                 } },
                 { $skip: desde },
                 { $limit: limit },
