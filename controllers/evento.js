@@ -126,6 +126,9 @@ const agregarLotes= async(req,res = response) =>{
 const quitarLote= async(req,res = response) =>{
     if(await isAdmin(res,req.uid)){
         await EventoLote.deleteMany({uuid_lote: { $eq: req.body.lote}})
+        await Oferta.deleteMany({uuid_lote: { $eq: req.body.lote}})
+        await OfertaAuto.deleteMany({uuid_lote: { $eq: req.body.lote}})
+        await Favorito.deleteMany({uuid_lote: { $eq: req.body.lote}})
         const loteDB= await Lote.find({uuid:req.body.lote});
         const {...campos}=loteDB[0];
         campos._doc.disponible=true;
@@ -133,6 +136,8 @@ const quitarLote= async(req,res = response) =>{
         campos._doc.fecha_cierre='';
         campos._doc.estado=0;
         campos._doc.extension=true;
+        campos._doc.ganador='';
+        campos._doc.precio_ganador='';
         await Lote.findByIdAndUpdate(loteDB[0]._id, campos,{new:true}); 
 
         res.json({
