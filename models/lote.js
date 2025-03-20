@@ -7,7 +7,7 @@ const LoteSchema = Schema({
     informacion: { type: String },
     moneda: { type: String, required: true },
     precio_base: { type: String, required: true },
-    incremento: { type: String, required: true },
+    incremento: { type: String },
     precio_salida: { type: String },
     base_salida: { type: Boolean, required: true },
     aclaracion: { type: String },
