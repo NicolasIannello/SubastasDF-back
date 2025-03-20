@@ -468,7 +468,7 @@ const getOfertas= async(req,res = response) =>{
                     __v: 0,
                     "evento._id": 0,                "evento.__v": 0,                "evento.categoria":0,           "evento.fecha_inicio":0,
                     /*"evento.fecha_cierre":0,*/    "evento.hora_inicio":0,         /*"evento.hora_cierre":0,*/     "evento.segundos_cierre":0,
-                    "evento.modalidad":0,           "evento.publicar_cierre":0,     "evento.inicio_automatico":0,   "evento.mostrar_precio":0,
+                    "evento.modalidad":0,           "evento.publicar_cierre":0,     "evento.inicio_automatico":0,   /*"evento.mostrar_precio":0,*/
                     "evento.mostrar_ganadores":0,   "evento.mostrar_ofertas":0,     "evento.grupo":0,               "evento.home":0,
                     "evento.eventos":0,             "evento.visitas":0,             /*"evento.estado":0,*/          "evento.uuid":0,
                     "evento.estado":0,              "evento.fecha_cierre":0,        "evento.hora_cierre":0
@@ -528,6 +528,9 @@ const getOfertas= async(req,res = response) =>{
                 { $group: { _id: "$uuid_lote", titulo : { $first: '$lote.titulo' }} },
                 { "$sort": { _id: -1 } },
             ]);
+            for (let i = 0; i < ofertaDB.length; i++) {
+                if(!ofertaDB[i].evento.mostrar_precio) ofertaDB[i].lote.oferta.cantidad='-';
+            }
 
             res.json({
                 ok:true,
