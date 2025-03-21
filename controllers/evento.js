@@ -98,6 +98,7 @@ const agregarLotes= async(req,res = response) =>{
                 const loteDB= await Lote.find({uuid:req.body.lotes[i]});
                 const {...campos}=loteDB[0];
                 campos._doc.disponible=false;
+                if(eventoDB[0].modalidad=='Remate') campos._doc.extension=false;
                 if(eventoDB[0].estado=1){
                     const loteEventoDB2 = await EventoLote.find({uuid_evento: eventoDB[0].uuid})
                     let dateFin= new Date(Date.parse(eventoDB[0].fecha_cierre+' '+eventoDB[0].hora_cierre));
