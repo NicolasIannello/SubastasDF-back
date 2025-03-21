@@ -396,6 +396,8 @@ const ofertar= async(req,res = response) =>{
                                 sendMessage(evento, "message", ofertaDato[0])
                             }
 
+                            checkCierre(evento,lote)
+
                             res.json({
                                 ok:true,
                             });
