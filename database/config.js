@@ -29,7 +29,7 @@ const tracking = async() =>{
     const sleep = ms => new Promise(res => setTimeout(res, ms));
 
     while(true) {
-        await sleep(5000);
+        await sleep(9000);
 
         let date_time=new Date();
         let date=("0" + date_time.getDate()).slice(-2);
