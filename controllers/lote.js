@@ -400,17 +400,15 @@ const duplicarLote= async(req,res = response) =>{
                 await pdfNew.save();
             }
 
-            let {_id, ...datos} = loteDB._doc;            
+            let {_id,estado,hora_cierre,fecha_cierre, ...datos} = loteDB._doc;            
             const lote= new Lote(datos);
             lote.terminos_condiciones=pdf+'.pdf'
             lote.disponible=true;
             lote.uuid=uuidv4();
             lote.ganador='';
             lote.precio_ganador='';
-            lote.hora_cierre='';
-            lote.fecha_cierre='';
-            lote.estado=0;
             lote.extension=true;
+            lote.visitas=0;
             await lote.save();
 
             for (let i = 0; i < imgDB.length; i++) {
