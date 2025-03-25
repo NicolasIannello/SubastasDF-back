@@ -12,6 +12,7 @@ const Favorito = require('../models/favorito');
 const OfertaAuto = require('../models/oferta-auto');
 const Vista = require('../models/vista');
 const Oferta = require('../models/oferta');
+const PDF = require('../models/pdf');
 
 const crearEvento= async(req,res = response) =>{
     try {
@@ -295,9 +296,66 @@ const imgEvento= async(req,res = response) =>{
         if(await isAdmin(res,req.uid)){
             if(req.body.caso=='edit'){
                 await borrarImagen(req.body.uuid,'eventos')
+                subirImagen(req.files['img'],req.body.uuid,-1,res)
             }
-            subirImagen(req.files['img'],req.body.uuid,-1,res)
-            
+            if(req.body.caso=='nuevo'){
+                subirImagen(req.files['img'],req.body.uuid,-1,res)
+                
+                const pdf=req.files['pdf']
+                const nombreCortado=pdf.name.split('.');
+                const extensionArchivo=nombreCortado[nombreCortado.length-1];
+                const nombreArchivo= uuidv4()+'.'+extensionArchivo;
+                const path= './files/pdfs/'+nombreArchivo;
+                const datos={ name: nombreCortado[0], pdf: nombreArchivo };
+
+                pdf.mv(path, async (err)=>{
+                    if(err){
+                        console.log(err);
+                        return res.status(500).json({
+                            ok:false,
+                            msg:'error en carga de archivo: '+nombreCortado[0],
+                        })
+                    }
+                    const pdfFile = new PDF(datos)
+                    await pdfFile.save();
+                    
+                    const eventoDB= await Evento.find({uuid:req.body.uuid});
+                    let {...campos}=eventoDB[0];        
+                    campos._doc.terminos_condiciones=pdfFile.pdf;
+                    await Evento.findByIdAndUpdate(eventoDB[0]._id, campos,{new:true}); 
+                })            
+            }
+            if(req.body.caso=='pdf'){
+                const eventoDB= await Evento.find({uuid:req.body.uuid});
+                let pathPDF='./files/pdfs/'+eventoDB[0].terminos_condiciones;
+                const pdfDB= await PDF.find({pdf:eventoDB[0].terminos_condiciones});        
+                
+                const pdf=req.files['pdf']
+                const nombreCortado=pdf.name.split('.');
+                const extensionArchivo=nombreCortado[nombreCortado.length-1];
+                const nombreArchivo= uuidv4()+'.'+extensionArchivo;
+                const path= './files/pdfs/'+nombreArchivo;
+                const datos={ name: nombreCortado[0], pdf: nombreArchivo };
+
+                pdf.mv(path, async (err)=>{
+                    if(err){
+                        console.log(err);
+                        return res.status(500).json({
+                            ok:false,
+                            msg:'error en carga de pdf: '+nombreCortado[0],
+                        })
+                    }
+                    const pdfFile = new PDF(datos)
+                    await pdfFile.save();
+                    let {...camposL}=eventoDB;        
+                    camposL=req.body;
+                    camposL.terminos_condiciones= pdfFile.pdf;
+                    if(fs.existsSync(pathPDF)) fs.unlinkSync(pathPDF);
+                    await PDF.findByIdAndDelete(pdfDB[0]._id);
+                    await Evento.findByIdAndUpdate(eventoDB[0]._id, camposL,{new:true}); 
+                })    
+            }
+
             res.json({
                 ok:true,
             });
@@ -338,6 +396,12 @@ const eliminarEvento=async(req,res=response) =>{
                     if(fs.existsSync(pathImg)) fs.unlinkSync(pathImg);
                     await Imagen.findByIdAndDelete(imgDB[i]._id);
                 }
+            }
+            const pdfDB = await PDF.find({pdf:eventoDB[0].terminos_condiciones})
+            if(pdfDB.length!=0){
+                let pathPDF='./files/pdfs/'+pdfDB[0].pdf;
+                if(fs.existsSync(pathPDF)) fs.unlinkSync(pathPDF);
+                await PDF.findByIdAndDelete(pdfDB[0]._id);    
             }
             await Favorito.deleteMany({uuid_evento:eventoDB[0].uuid});
             await OfertaAuto.deleteMany({uuid_evento:eventoDB[0].uuid});

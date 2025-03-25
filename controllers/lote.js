@@ -19,26 +19,26 @@ const OfertaAuto = require('../models/oferta-auto');
 const crearLote= async(req,res = response) =>{
     try {
         if(await isAdmin(res,req.uid)){
-            const pdf=req.files['pdf']
-            const nombreCortado=pdf.name.split('.');
-            const extensionArchivo=nombreCortado[nombreCortado.length-1];
-            const nombreArchivo= uuidv4()+'.'+extensionArchivo;
-            const path= './files/pdfs/'+nombreArchivo;
-            const datos={ name: nombreCortado[0], pdf: nombreArchivo };
+            //const pdf=req.files['pdf']
+            //const nombreCortado=pdf.name.split('.');
+            //const extensionArchivo=nombreCortado[nombreCortado.length-1];
+            //const nombreArchivo= uuidv4()+'.'+extensionArchivo;
+            //const path= './files/pdfs/'+nombreArchivo;
+            //const datos={ name: nombreCortado[0], pdf: nombreArchivo };
 
-            pdf.mv(path, async (err)=>{
-                if(err){
-                    console.log(err);
-                    return res.status(500).json({
-                        ok:false,
-                        msg:'error en carga de archivo: '+nombreCortado[0],
-                    })
-                }
-                const pdfFile = new PDF(datos)
-                await pdfFile.save();
+            //pdf.mv(path, async (err)=>{
+                // if(err){
+                //     console.log(err);
+                //     return res.status(500).json({
+                //         ok:false,
+                //         msg:'error en carga de archivo: '+nombreCortado[0],
+                //     })
+                // }
+                //const pdfFile = new PDF(datos)
+                //await pdfFile.save();
                 const lote= new Lote(req.body);
                 lote.disponible=true;
-                lote.terminos_condiciones=pdfFile.pdf;
+                //lote.terminos_condiciones=pdfFile.pdf;
                 lote.uuid=uuidv4();
                 lote.ganador='';
                 lote.precio_ganador='';
@@ -57,7 +57,7 @@ const crearLote= async(req,res = response) =>{
                         }
                     };
                 }
-            })            
+            //})            
 
             res.json({
                 ok:true,
@@ -91,7 +91,7 @@ const getLotes= async(req,res = response) =>{
                     __v: 0,
                     "descripcion": 0,
                     "aclaracion": 0,
-                    "terminos_condiciones": 0,
+                    //"terminos_condiciones": 0,
                 } },
                 sortOperator,
                 { $lookup: {
@@ -149,14 +149,14 @@ const lote= async(req,res = response) =>{
         const lote = await Lote.aggregate([
             { "$match": { uuid:req.body.uuid } },
             { $project: { __v: 0, '_id':0 } },
-            { $lookup: {
-                from: "pdfs",
-                localField: "terminos_condiciones",
-                foreignField: "pdf",
-                as: "pdf"
-            } },
-            {$unwind: { path: "$pdf", preserveNullAndEmptyArrays: true }},
-            { $project: { __v: 0, "pdf.__v": 0, "pdf._id": 0, } },
+            // { $lookup: {
+            //     from: "pdfs",
+            //     localField: "terminos_condiciones",
+            //     foreignField: "pdf",
+            //     as: "pdf"
+            // } },
+            // {$unwind: { path: "$pdf", preserveNullAndEmptyArrays: true }},
+            // { $project: { __v: 0, "pdf.__v": 0, "pdf._id": 0, } },
             { $lookup: {
                 from: "imagens",
                 localField: "uuid",
@@ -254,13 +254,13 @@ const deleteLote=async(req,res=response) =>{
         if(await isAdmin(res,req.uid)){
             const loteDB = await Lote.find({uuid})
             const imgDB = await Imagen.find({lote:uuid})
-            const pdfDB = await PDF.find({pdf:loteDB[0].terminos_condiciones})
+            //const pdfDB = await PDF.find({pdf:loteDB[0].terminos_condiciones})
             
-            if(pdfDB.length!=0){
-                let pathPDF='./files/pdfs/'+pdfDB[0].pdf;
-                if(fs.existsSync(pathPDF)) fs.unlinkSync(pathPDF);
-                await PDF.findByIdAndDelete(pdfDB[0]._id);    
-            }
+            // if(pdfDB.length!=0){
+            //     let pathPDF='./files/pdfs/'+pdfDB[0].pdf;
+            //     if(fs.existsSync(pathPDF)) fs.unlinkSync(pathPDF);
+            //     await PDF.findByIdAndDelete(pdfDB[0]._id);    
+            // }
             if(imgDB.length!=0){
                 for (let i = 0; i < imgDB.length; i++) {
                     let pathImg='./files/lotes/'+imgDB[i].img
@@ -301,35 +301,35 @@ const actualizarLote= async(req,res=response)=>{
         let {...camposL}=loteDB;        
         camposL=req.body;
 
-        if(req.files && req.files['pdf']){
-            let pathPDF='./files/pdfs/'+loteDB[0].terminos_condiciones;
-            const pdfDB= await PDF.find({pdf:loteDB[0].terminos_condiciones});        
+        // if(req.files && req.files['pdf']){
+        //     let pathPDF='./files/pdfs/'+loteDB[0].terminos_condiciones;
+        //     const pdfDB= await PDF.find({pdf:loteDB[0].terminos_condiciones});        
             
-            const pdf=req.files['pdf']
-            const nombreCortado=pdf.name.split('.');
-            const extensionArchivo=nombreCortado[nombreCortado.length-1];
-            const nombreArchivo= uuidv4()+'.'+extensionArchivo;
-            const path= './files/pdfs/'+nombreArchivo;
-            const datos={ name: nombreCortado[0], pdf: nombreArchivo };
+        //     const pdf=req.files['pdf']
+        //     const nombreCortado=pdf.name.split('.');
+        //     const extensionArchivo=nombreCortado[nombreCortado.length-1];
+        //     const nombreArchivo= uuidv4()+'.'+extensionArchivo;
+        //     const path= './files/pdfs/'+nombreArchivo;
+        //     const datos={ name: nombreCortado[0], pdf: nombreArchivo };
 
-            pdf.mv(path, async (err)=>{
-                if(err){
-                    console.log(err);
-                    return res.status(500).json({
-                        ok:false,
-                        msg:'error en carga de archivo: '+nombreCortado[0],
-                    })
-                }
-                const pdfFile = new PDF(datos)
-                await pdfFile.save();                
-                camposL.terminos_condiciones= pdfFile.pdf;
-                if(fs.existsSync(pathPDF)) fs.unlinkSync(pathPDF);
-                await PDF.findByIdAndDelete(pdfDB[0]._id);
-                await Lote.findByIdAndUpdate(loteDB[0]._id, camposL,{new:true}); 
-            })    
-        }else{
+        //     pdf.mv(path, async (err)=>{
+        //         if(err){
+        //             console.log(err);
+        //             return res.status(500).json({
+        //                 ok:false,
+        //                 msg:'error en carga de archivo: '+nombreCortado[0],
+        //             })
+        //         }
+        //         const pdfFile = new PDF(datos)
+        //         await pdfFile.save();                
+        //         camposL.terminos_condiciones= pdfFile.pdf;
+        //         if(fs.existsSync(pathPDF)) fs.unlinkSync(pathPDF);
+        //         await PDF.findByIdAndDelete(pdfDB[0]._id);
+        //         await Lote.findByIdAndUpdate(loteDB[0]._id, camposL,{new:true}); 
+        //     })    
+        // }else{
             flag=true;
-        }
+        // }
 
         if(req.body.imgElim){
             const imagenesElim = await Imagen.find({lote:loteDB[0].uuid}).sort({ orden: 1 }) 
@@ -387,22 +387,22 @@ const duplicarLote= async(req,res = response) =>{
         if(await isAdmin(res,req.uid)){
             const loteDB = await Lote.findById(req.body.id);
             const imgDB = await Imagen.find({lote: loteDB.uuid});
-            const pdfDB = await PDF.find({pdf: loteDB.terminos_condiciones});
+            //const pdfDB = await PDF.find({pdf: loteDB.terminos_condiciones});
 
-            let pathPDF='./files/pdfs/'+loteDB.terminos_condiciones;
-            let pdf=uuidv4();
-            let newFile='./files/pdfs/'+pdf+'.pdf';
-            if(fs.existsSync(pathPDF)) {
-                fs.copyFileSync(pathPDF, newFile)
-                let {_id, ...datosPDF} = pdfDB[0]._doc;            
-                const pdfNew= new PDF(datosPDF);
-                pdfNew.pdf=pdf+'.pdf'
-                await pdfNew.save();
-            }
+            // let pathPDF='./files/pdfs/'+loteDB.terminos_condiciones;
+            // let pdf=uuidv4();
+            // let newFile='./files/pdfs/'+pdf+'.pdf';
+            // if(fs.existsSync(pathPDF)) {
+            //     fs.copyFileSync(pathPDF, newFile)
+            //     let {_id, ...datosPDF} = pdfDB[0]._doc;            
+            //     const pdfNew= new PDF(datosPDF);
+            //     pdfNew.pdf=pdf+'.pdf'
+            //     await pdfNew.save();
+            // }
 
             let {_id,estado,hora_cierre,fecha_cierre, ...datos} = loteDB._doc;            
             const lote= new Lote(datos);
-            lote.terminos_condiciones=pdf+'.pdf'
+            //lote.terminos_condiciones=pdf+'.pdf'
             lote.disponible=true;
             lote.uuid=uuidv4();
             lote.ganador='';
@@ -572,7 +572,7 @@ const getFavoritos= async(req,res = response) =>{
                     __v: 0,
                     "lote.aclaracion": 0,    "lote.base_salida": 0,   "lote.uuid": 0,                  "lote.__v": 0,         "lote._id": 0,
                     "lote.descripcion": 0,   "lote.disponible": 0,    "lote.incremento": 0,            "lote.moneda": 0,  "lote.informacion": 0,  "lote.extension": 0,
-                    "lote.precio_base": 0,   "lote.precio_salida": 0, "lote.terminos_condiciones": 0 , "lote.visitas": 0,"lote.ganador": 0,"lote.precio_ganador": 0
+                    "lote.precio_base": 0,   "lote.precio_salida": 0, /*"lote.terminos_condiciones": 0 ,*/ "lote.visitas": 0,"lote.ganador": 0,"lote.precio_ganador": 0
                 } },
                 { "$sort": { _id: -1 } },
             ]);
