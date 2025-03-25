@@ -20,6 +20,7 @@ const EventoSchema = Schema({
     mostrar_ofertas: { type: Boolean, required: true },
     grupo: { type: String, required: true },
     estado: { type: Number, required: true },
+    terminos_condiciones: { type: String },
 });
 
 EventoSchema.method('toJSON', function() {

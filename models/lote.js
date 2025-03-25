@@ -11,7 +11,7 @@ const LoteSchema = Schema({
     precio_salida: { type: String },
     base_salida: { type: Boolean, required: true },
     aclaracion: { type: String },
-    terminos_condiciones: { type: String, required: true },
+    //terminos_condiciones: { type: String, required: true },
     disponible: { type: Boolean, required: true },
     ganador: { type: String },
     precio_ganador: { type: String },
