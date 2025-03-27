@@ -497,6 +497,16 @@ const getOfertas= async(req,res = response) =>{
                             "oferta.mail": 0,   "oferta.tipo": 0,   "oferta.uuid_evento": 0,"oferta.uuid_lote": 0
                         } },
                         {$unwind: { path: "$oferta", preserveNullAndEmptyArrays: true }},
+                        { $lookup: {
+                            from: "ofertas",
+                            localField: "uuid",
+                            foreignField: "uuid_lote",
+                            "pipeline": [ 
+                                { $group: { _id: "$mail", oferta: { $max: "$cantidad" } } },
+                                { "$sort" : { "oferta" : -1 } },
+                            ],
+                            as: "puesto",
+                        } },
                     ],
                 } },
                 {$unwind: { path: "$lote", preserveNullAndEmptyArrays: true }},
@@ -532,6 +542,15 @@ const getOfertas= async(req,res = response) =>{
             ]);
             for (let i = 0; i < ofertaDB.length; i++) {
                 if(!ofertaDB[i].evento.mostrar_precio) ofertaDB[i].lote.oferta.cantidad='-';
+                if(ofertaDB[i].lote.estado==2){
+                    for (let j = 0; j < ofertaDB[i].lote.puesto.length; j++) {                        
+                        if(userDB.mail==ofertaDB[i].lote.puesto[j]._id){
+                            ofertaDB[i].lote.puesto=j+1;
+                        }
+                    }
+                }else{
+                    ofertaDB[i].lote.puesto='-'
+                }
             }
 
             res.json({

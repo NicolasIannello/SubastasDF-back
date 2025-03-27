@@ -524,7 +524,7 @@ const getFavoritos= async(req,res = response) =>{
                     "evento.modalidad":0,           "evento.publicar_cierre":0,     "evento.inicio_automatico":0,   /*"evento.mostrar_precio":0,*/
                     "evento.mostrar_ganadores":0,   "evento.mostrar_ofertas":0,     "evento.grupo":0,               "evento.home":0,
                     "evento.eventos":0,             "evento.visitas":0,             /*"evento.estado":0,*/          "evento.uuid":0,
-                    "evento.estado":0,              "evento.fecha_cierre":0,        "evento.hora_cierre":0
+                    "evento.estado":0,             "evento.fecha_cierre":0,        "evento.hora_cierre":0,          "evento.terminos_condiciones":0
                 } },
                 { $lookup: {
                     from: "lotes",
@@ -565,6 +565,16 @@ const getFavoritos= async(req,res = response) =>{
                             "oferta.fecha": 0,    "oferta.tipo": 0,   "oferta.uuid": 0, "oferta.__v": 0,         "oferta._id": 0,
                             "oferta.mail": 0,   "oferta.tipo": 0,   "oferta.uuid_evento": 0,"oferta.uuid_lote": 0
                         } },
+                        { $lookup: {
+                            from: "ofertas",
+                            localField: "uuid",
+                            foreignField: "uuid_lote",
+                            "pipeline": [ 
+                                { $group: { _id: "$mail", oferta: { $max: "$cantidad" } } },
+                                { "$sort" : { "oferta" : -1 } },
+                            ],
+                            as: "puesto",
+                        } },
                     ],
                 } },
                 {$unwind: { path: "$lote", preserveNullAndEmptyArrays: true }},
@@ -579,7 +589,16 @@ const getFavoritos= async(req,res = response) =>{
             for (let i = 0; i < favoritoDB.length; i++) {
                 if(!favoritoDB[i].evento.mostrar_precio) favoritoDB[i].lote.oferta.cantidad='-'
             }
-            
+            if(favoritoDB[0].lote.estado==2){
+                for (let i = 0; i < favoritoDB[0].lote.puesto.length; i++) {
+                    if(userDB.mail==favoritoDB[0].lote.puesto[i]._id){
+                        favoritoDB[0].lote.puesto=i+1;
+                    }
+                }
+            }else{
+                favoritoDB[0].lote.puesto='-'
+            }
+
             res.json({
                 ok:true,
                 favoritoDB
