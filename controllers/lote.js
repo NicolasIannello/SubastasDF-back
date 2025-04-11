@@ -44,6 +44,7 @@ const crearLote= async(req,res = response) =>{
                 lote.precio_ganador='';
                 lote.visitas=0;
                 lote.extension=true;
+                lote.adjudicacion='';
                 await lote.save();  
 
                 if(req.files['img'].length==undefined){
@@ -80,13 +81,19 @@ const getLotes= async(req,res = response) =>{
         const orden= parseInt(req.query.orden) || 1;
         const order= req.query.order || '_id';
         const disp= req.query.disp=='true' ? true : {$exists: true};
+        const adj= req.query.adj=='true' ? '$ne' : {$exists: true};        
         var sortOperator = { "$sort": { } };
         sortOperator["$sort"][order] = orden;
         var matchOperator = { "$match": { "disponible": disp } }
-
+        var matchOperator2 = { "$match": { "ganador": { } } }
+        if(req.query.adj=='false'){
+            matchOperator2['$match']['ganador'] = adj;
+        }else{
+            matchOperator2['$match']['ganador'][adj] = '';
+        }
         const [ lotes, total ]= await Promise.all([
             Lote.aggregate([
-                matchOperator,
+                matchOperator,matchOperator2,
                 { $project: {
                     __v: 0,
                     "descripcion": 0,
@@ -409,6 +416,7 @@ const duplicarLote= async(req,res = response) =>{
             lote.precio_ganador='';
             lote.extension=true;
             lote.visitas=0;
+            lote.adjudicacion='';
             await lote.save();
 
             for (let i = 0; i < imgDB.length; i++) {
@@ -580,7 +588,7 @@ const getFavoritos= async(req,res = response) =>{
                 {$unwind: { path: "$lote", preserveNullAndEmptyArrays: true }},
                 { $project: {
                     __v: 0,
-                    "lote.aclaracion": 0,    "lote.base_salida": 0,   "lote.uuid": 0,                  "lote.__v": 0,         "lote._id": 0,
+                    "lote.aclaracion": 0,    "lote.base_salida": 0,   "lote.uuid": 0,                  "lote.__v": 0,         "lote._id": 0, "lote.adjudicacion": 0,
                     "lote.descripcion": 0,   "lote.disponible": 0,    "lote.incremento": 0,            "lote.moneda": 0,  "lote.informacion": 0,  "lote.extension": 0,
                     "lote.precio_base": 0,   "lote.precio_salida": 0, /*"lote.terminos_condiciones": 0 ,*/ "lote.visitas": 0,"lote.ganador": 0,"lote.precio_ganador": 0
                 } },
@@ -588,15 +596,15 @@ const getFavoritos= async(req,res = response) =>{
             ]);
             for (let i = 0; i < favoritoDB.length; i++) {
                 if(!favoritoDB[i].evento.mostrar_precio) favoritoDB[i].lote.oferta.cantidad='-'
-            }
-            if(favoritoDB[0].lote.estado==2){
-                for (let i = 0; i < favoritoDB[0].lote.puesto.length; i++) {
-                    if(userDB.mail==favoritoDB[0].lote.puesto[i]._id){
-                        favoritoDB[0].lote.puesto=i+1;
+                if(favoritoDB[i].lote.estado==2){
+                    for (let j = 0; j < favoritoDB[i].lote.puesto.length; j++) {
+                        if(userDB.mail==favoritoDB[i].lote.puesto[j]._id){
+                            favoritoDB[i].lote.puesto=j+1;
+                        }
                     }
+                }else{
+                    favoritoDB[i].lote.puesto='-'
                 }
-            }else{
-                favoritoDB[0].lote.puesto='-'
             }
 
             res.json({
