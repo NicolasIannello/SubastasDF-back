@@ -10,6 +10,7 @@ const Oferta = require('../models/oferta');
 const nodemailer = require("nodemailer");
 const { notificarApertura } = require('../database/config');
 const EventoLote = require('../models/evento-lote');
+const RegistroTc = require('../models/registro-tc');
 
 const login=async(req,res=response)=>{
     const { user, pass }= req.body;
@@ -567,4 +568,103 @@ const reComunicado= async(req,res=response) =>{
     });
 }
 
-module.exports={ login, renewToken, getUsers, deleteUser, actualizarUser, crearAdmin, buscarDato, excelUsuarios, getAdmins, isAdmin, isAdmin2, comunicar, reComunicado }
+const setStatus= async(req,res=response) =>{
+    const adminDB= await Admin.findById(req.uid)    
+    if(!adminDB){
+        res.json({
+            ok:false
+        })
+        return;
+    }
+
+    const loteDB= await Lote.find({uuid:req.body.lote});
+    if(!loteDB){
+        res.json({
+            ok:false
+        })
+    }
+
+    let {...camposL}=loteDB;        
+    camposL[0].adjudicacion=req.body.status;
+    await Lote.findByIdAndUpdate(loteDB[0]._id, camposL[0],{new:true}); 
+
+    res.json({
+        ok:true,
+    });
+}
+
+const getRegistroTC= async(req,res=response) =>{
+    const desde= parseInt(req.query.desde) || 0;
+    const limit= parseInt(req.query.limit) || 20;
+    const orden= parseInt(req.query.orden) || 1;
+    const order= req.query.order || '_id';
+    var sortOperator = { "$sort": { } };
+    sortOperator["$sort"][order] = orden;
+    
+    const dato= req.query.dato;
+    const tipo= req.query.tipo;
+    var regExOperator = { "$match": { } }    
+    var regExOperator2 = { "$match": { } }    
+
+    if(dato!=undefined && tipo!='nombre' && tipo!='uuid'){
+        regExOperator["$match"][tipo] = { "$regex": { }, "$options": "i" };
+        regExOperator["$match"][tipo]["$regex"] = dato;    
+    }else if(tipo!='nombre' && tipo!='uuid'){
+        regExOperator["$match"][tipo]= { $exists: true };
+    }
+
+    if(dato!=undefined && tipo!='fecha' && tipo!='mail'){
+        regExOperator2["$match"][tipo] = { "$regex": { }, "$options": "i" };
+        regExOperator2["$match"][tipo]["$regex"] = dato;    
+    }else if(tipo!='fecha' && tipo!='mail'){
+        regExOperator2["$match"][tipo]= { $exists: true };
+    }
+
+    const adminDB= await Admin.findById(req.uid)
+    if(!adminDB){
+        res.json({
+            ok:false
+        })
+        return;
+    }
+
+    const [ tcs, total ]= await Promise.all([
+        RegistroTc.aggregate([
+            regExOperator,
+            { $project: {
+                __v: 0,
+                "__v": 0,
+            } },
+            { $lookup: {
+                from: "eventos",
+                localField: "terminos_condiciones",
+                foreignField: "terminos_condiciones",
+                as: "evento",
+                "pipeline": [ 
+                    regExOperator2
+                ],
+            } },
+            {$unwind: { path: "$evento", preserveNullAndEmptyArrays: true }},
+            { $project: {
+                __v: 0,
+                "evento.__v": 0,                "evento.categoria":0,           "evento.fecha_inicio":0,
+                "evento.fecha_cierre":0,    "evento.hora_inicio":0,         "evento.hora_cierre":0,   "evento.segundos_cierre":0,
+                "evento.modalidad":0,           "evento.publicar_cierre":0,     "evento.inicio_automatico":0,   "evento.mostrar_precio":0,
+                "evento.mostrar_ganadores":0,   "evento.mostrar_ofertas":0,     "evento.grupo":0,               "evento.home":0,
+                "evento.visitas":0,             "evento.estado":0, "evento.eventos":0
+            } },
+            sortOperator,
+            { $skip: desde },
+            { $limit: limit },
+        ]).collation({locale: 'en'}),
+        RegistroTc.countDocuments()
+    ]); 
+    
+    res.json({
+        ok:true,
+        tcs,
+        total
+    });
+}
+
+module.exports={ login, renewToken, getUsers, deleteUser, actualizarUser, crearAdmin, buscarDato, excelUsuarios, getAdmins, isAdmin, isAdmin2, comunicar, reComunicado, setStatus, getRegistroTC }
