@@ -71,6 +71,7 @@ const tracking = async() =>{
                     campos._doc.ganador='';
                     campos._doc.precio_ganador='';
                     campos._doc.estado=1;
+                    campos._doc.adjudicacion='';
                     campos._doc.hora_cierre=hora_nueva;
                     campos._doc.fecha_cierre=fecha_nueva[2].slice(0,4)+'-'+(fecha_nueva[0].length==1 ? '0'+fecha_nueva[0] : fecha_nueva[0])+'-'+(fecha_nueva[1].length==1 ? '0'+fecha_nueva[1] : fecha_nueva[1]);
                     await Lote.findByIdAndUpdate(loteDB[0]._id, campos,{new:true});             
@@ -105,6 +106,7 @@ const tracking = async() =>{
                         if(ofertaDB[0]){
                             campos._doc.ganador=ofertaDB[0].mail;
                             campos._doc.precio_ganador=ofertaDB[0].cantidad;
+                            campos._doc.adjudicacion='En analisis';
                         }
                         await Lote.findByIdAndUpdate(loteDB[0]._id, campos,{new:true});             
                         console.log('Cerrando lote: '+loteDB[0]._id);

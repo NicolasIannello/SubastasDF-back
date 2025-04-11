@@ -85,7 +85,7 @@ const checkCierre= async(evento,lote) =>{
                     { $project: {
                         __v: 0,
                         "lote.aclaracion": 0,    "lote.base_salida": 0,   "lote.estado": 0,                  "lote.__v": 0,         "lote._id": 0,
-                        "lote.descripcion": 0,   "lote.disponible": 0,    "lote.incremento": 0,            "lote.moneda": 0,"lote.titulo": 0,
+                        "lote.descripcion": 0,   "lote.disponible": 0,    "lote.incremento": 0,            "lote.moneda": 0,"lote.titulo": 0, "lote.adjudicacion" : 0,
                         "lote.precio_base": 0,   "lote.precio_salida": 0, "lote.terminos_condiciones": 0 , "lote.visitas": 0,"lote.ganador": 0,"lote.precio_ganador": 0
                     } },
                 ],
@@ -381,7 +381,7 @@ const ofertar= async(req,res = response) =>{
                                             { $project: {
                                                 __v: 0,
                                                 "lote.aclaracion": 0,    "lote.base_salida": 0,   "lote.estado": 0,                  "lote.__v": 0,         "lote._id": 0,
-                                                "lote.descripcion": 0,   "lote.disponible": 0,    "lote.incremento": 0,            "lote.moneda": 0,"lote.titulo": 0,
+                                                "lote.descripcion": 0,   "lote.disponible": 0,    "lote.incremento": 0,            "lote.moneda": 0,"lote.titulo": 0, "lote.adjudicacion" : 0,
                                                 "lote.precio_base": 0,   "lote.precio_salida": 0, "lote.terminos_condiciones": 0 , "lote.visitas": 0,"lote.ganador": 0,"lote.precio_ganador": 0
                                             } },
                                         ],
@@ -513,7 +513,7 @@ const getOfertas= async(req,res = response) =>{
                 { $project: {
                     __v: 0,
                     "lote.aclaracion": 0,    "lote.base_salida": 0,     "lote.uuid": 0,              "lote.__v": 0,         "lote._id": 0,
-                    "lote.descripcion": 0,   "lote.disponible": 0,    "lote.incremento": 0,            "lote.moneda": 0,
+                    "lote.descripcion": 0,   "lote.disponible": 0,    "lote.incremento": 0,            "lote.moneda": 0, "lote.adjudicacion": 0,
                     "lote.precio_base": 0,   "lote.precio_salida": 0, "lote.terminos_condiciones": 0, "lote.visitas": 0,"lote.ganador": 0,"lote.precio_ganador": 0
                 } },
                 { "$sort": { _id: -1 } },
@@ -535,7 +535,7 @@ const getOfertas= async(req,res = response) =>{
                     __v: 0,
                     "lote.aclaracion": 0,    "lote.base_salida": 0,     "lote.uuid": 0,              "lote.__v": 0,         "lote._id": 0, "lote.hora_cierre": 0, "lote.extension": 0,
                     "lote.descripcion": 0,   "lote.disponible": 0,    "lote.incremento": 0,            "lote.moneda": 0, "lote.estado": 0, "lote.fecha_cierre": 0,
-                    "lote.precio_base": 0,   "lote.precio_salida": 0, "lote.terminos_condiciones": 0, "lote.visitas": 0,"lote.ganador": 0,"lote.precio_ganador": 0
+                    "lote.precio_base": 0,   "lote.precio_salida": 0, "lote.terminos_condiciones": 0, "lote.visitas": 0,"lote.ganador": 0,"lote.precio_ganador": 0, "lote.adjudicacion": 0,
                 } },
                 { $group: { _id: "$uuid_lote", titulo : { $first: '$lote.titulo' }} },
                 { "$sort": { _id: -1 } },

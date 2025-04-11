@@ -140,6 +140,7 @@ const quitarLote= async(req,res = response) =>{
         campos._doc.extension=true;
         campos._doc.ganador='';
         campos._doc.precio_ganador='';
+        campos._doc.adjudicacion='';
         await Lote.findByIdAndUpdate(loteDB[0]._id, campos,{new:true}); 
 
         res.json({
