@@ -7,6 +7,7 @@ const Empresa = require('../models/empresa');
 const EventoLote = require('../models/evento-lote');
 const Lote = require('../models/lote');
 const Vista = require('../models/vista');
+const RegistroTc = require('../models/registro-tc');
 
 const crearUsuario= async(req,res = response) =>{
     const {mail,pass,cuil_cuit,tipo}=req.body;
@@ -425,4 +426,48 @@ const setVista= async(req,res = response) =>{
     }
 };
 
-module.exports={ crearUsuario, login, renewToken, validarCuenta, cambiarPass, sendCambio, mailContacto, timeNow, getDatos, getAdjudicados, setVista }
+const aceptarTC= async(req,res=response)=>{    
+    const _id=req.uid;
+    const pdf=req.body.pdf
+    const usuarioDB= await Usuario.findById(_id)
+
+    if(!usuarioDB){
+        res.json({
+            ok:false
+        })
+        return;
+    }else{        
+        const tc = await RegistroTc.find({mail:usuarioDB.mail, terminos_condiciones:pdf})        
+
+        if(tc.length==0){
+            const registro= new RegistroTc({mail:usuarioDB.mail, terminos_condiciones: pdf, fecha: timeNow()});
+            await registro.save();
+        }
+
+        res.json({
+            ok:true,
+        })
+    }
+}
+
+const getTC= async(req,res=response)=>{    
+    const _id=req.uid;
+    const pdf=req.body.pdf
+    const usuarioDB= await Usuario.findById(_id)
+
+    if(!usuarioDB){
+        res.json({
+            ok:false
+        })
+        return;
+    }else{        
+        const tc = await RegistroTc.find({mail:usuarioDB.mail, terminos_condiciones:pdf})        
+        
+        res.json({
+            ok:true,
+            let: tc
+        })
+    }
+}
+
+module.exports={ crearUsuario, login, renewToken, validarCuenta, cambiarPass, sendCambio, mailContacto, timeNow, getDatos, getAdjudicados, setVista, aceptarTC, getTC }
