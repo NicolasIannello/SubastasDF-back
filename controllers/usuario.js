@@ -182,8 +182,6 @@ const timeNow=()=>{
 
 const notificar= async(mail,id,tipo)=>{    
     const transporter = nodemailer.createTransport({
-        maxConnections: 1,
-        pool: true,
         host: process.env.MSERVICE,
         port: 465,
         secure: true,
@@ -217,6 +215,8 @@ const notificar= async(mail,id,tipo)=>{
         if (error) {
             console.log(error);
             return false;
+        }else{
+            console.log('mail enviado a: '+info.envelope.to[0]);
         }
     });
     
@@ -226,8 +226,6 @@ const notificar= async(mail,id,tipo)=>{
 const mailContacto= async(req,res=response)=>{    
     const {mensaje,mensaje2,asunto,nombre_apellido,mail,como_encontro} = req.body
     const transporter = nodemailer.createTransport({
-        maxConnections: 1,
-        pool: true,
         host: process.env.MSERVICE,
         port: 465,
         secure: true,
@@ -253,6 +251,8 @@ const mailContacto= async(req,res=response)=>{
                 ok:false,
                 msg:'error'
             });        
+        }else{
+            console.log('mail enviado a: '+info.envelope.to[0]);
         }
     });
     

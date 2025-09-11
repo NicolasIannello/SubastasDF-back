@@ -77,8 +77,22 @@ const tracking = async() =>{
                     await Lote.findByIdAndUpdate(loteDB[0]._id, campos,{new:true});             
                 }
                 const userDB = await Usuario.find({$or: [{grupo: eventoDB[i].grupo}, {grupo: 'general'}]})
+
+                const transporter = nodemailer.createTransport({
+                    maxConnections: 5,
+                    pool: true,
+                    host: process.env.MSERVICE,
+                    port: 465,
+                    secure: true,
+                    auth: {
+                        user: 'contacto@gruppodf.com.ar',
+                        pass: process.env.MPASS
+                    },
+                    maxMessages: 100,
+                    family: 4,
+                });
                 for (let j = 0; j < userDB.length; j++) {
-                    if(process.env.NOTI=='true') notificarApertura(userDB[j].mail,userDB[j].nombre,eventoDB[i].nombre,eventoDB[i].fecha_cierre,eventoDB[i].hora_cierre,eventoDB[i].uuid)
+                    if(process.env.NOTI=='true') notificarApertura(userDB[j].mail,userDB[j].nombre,eventoDB[i].nombre,eventoDB[i].fecha_cierre,eventoDB[i].hora_cierre,eventoDB[i].uuid,transporter)
                 }
             }        
         }
@@ -158,9 +172,22 @@ const tracking = async() =>{
                         } },
                     ]);
 
+                    const transporter = nodemailer.createTransport({
+                        maxConnections: 5,
+                        pool: true,
+                        host: process.env.MSERVICE,
+                        port: 465,
+                        secure: true,
+                        auth: {
+                            user: 'contacto@gruppodf.com.ar',
+                            pass: process.env.MPASS
+                        },
+                        maxMessages: 100,
+                        family: 4,
+                    });
                     for (let j = 0; j < userDB.length; j++) {
                         if(userDB[j].oferta.length>0){
-                            if(process.env.NOTI=='true') notificarCierre(userDB[j].mail,userDB[j].nombre,eventoDB2[i].nombre,userDB[j].oferta)
+                            if(process.env.NOTI=='true') notificarCierre(userDB[j].mail,userDB[j].nombre,eventoDB2[i].nombre,userDB[j].oferta,transporter)
                         }
                     }
                 }
@@ -222,20 +249,10 @@ const tracking = async() =>{
     }
 }
 
-const notificarApertura= async(mail,nombre,evento,fecha,hora,id)=>{
-    const transporter = nodemailer.createTransport({
-        maxConnections: 1,
-        pool: true,
-        host: process.env.MSERVICE,
-        port: 465,
-        secure: true,
-        auth: {
-            user: 'contacto@gruppodf.com.ar',
-            pass: process.env.MPASS
-        }
-    });
+const notificarApertura= async(mail,nombre,evento,fecha,hora,id,trans)=>{
+    // const transporter
 
-    await transporter.sendMail({
+    await trans.sendMail({
         from: '"Gruppo DF Subastas" <contacto@gruppodf.com.ar>',
         to: mail,
         subject: 'Invitacion a evento '+evento,
@@ -251,24 +268,16 @@ const notificarApertura= async(mail,nombre,evento,fecha,hora,id)=>{
         if (error) {
             console.log(error);
             return false;
+        }else{
+            console.log('mail enviado a: '+info.envelope.to[0]);
         }
     });
     
     return true;
 };
 
-const notificarCierre= async(mail,nombre,evento,ofertas)=>{
-    const transporter = nodemailer.createTransport({
-        maxConnections: 1,
-        pool: true,
-        host: process.env.MSERVICE,
-        port: 465,
-        secure: true,
-        auth: {
-            user: 'contacto@gruppodf.com.ar',
-            pass: process.env.MPASS
-        }
-    });
+const notificarCierre= async(mail,nombre,evento,ofertas,trans)=>{
+    // const transporter
     let textMsg="Hola "+nombre+"!.\nEstos han sido los resultados del evento: "+evento+".\nLotes ofertados:\n";
     let htmlMsg="Hola "+nombre+"!.<br>Estos han sido los resultados del evento: "+evento+".<br>Lotes ofertados:<br>";
 
@@ -285,7 +294,7 @@ const notificarCierre= async(mail,nombre,evento,ofertas)=>{
     textMsg+="\nSaludamos muy atentamente."+"\nEquipo de Gruppo DF - Soluciones para el tratamiento de sus bienes"
     htmlMsg+="<br>Saludamos muy atentamente."+"<br>Equipo de Gruppo DF - Soluciones para el tratamiento de sus bienes"
 
-    await transporter.sendMail({
+    await trans.sendMail({
         from: '"Gruppo DF Subastas" <contacto@gruppodf.com.ar>',
         to: mail,
         subject: 'Finalizacion del evento '+evento,
@@ -295,6 +304,8 @@ const notificarCierre= async(mail,nombre,evento,ofertas)=>{
         if (error) {
             console.log(error);
             return false;
+        }else{
+            console.log('mail enviado a: '+info.envelope.to[0]);
         }
     });
     

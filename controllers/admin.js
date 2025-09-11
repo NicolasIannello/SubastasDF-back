@@ -4,6 +4,9 @@ const bcrypt=require('bcryptjs');
 const Admin = require('../models/admin');
 const Usuario = require('../models/usuario');
 const Empresa = require('../models/empresa');
+const Favorito = require('../models/favorito');
+const OfertaAuto = require('../models/oferta-auto');
+const Vista = require('../models/vista');
 const Lote = require('../models/lote');
 const Evento = require('../models/evento');
 const Oferta = require('../models/oferta');
@@ -516,18 +519,22 @@ const comunicar= async(req,res=response) =>{
     req.body.texto+="\nSaludamos muy atentamente."+"\nEquipo de Gruppo DF - Soluciones para el tratamiento de sus bienes"
     req.body.texto2+="<br>Saludamos muy atentamente."+"<br>Equipo de Gruppo DF - Soluciones para el tratamiento de sus bienes"
 
+    const transporter = nodemailer.createTransport({
+        maxConnections: 5,
+        pool: true,
+        host: process.env.MSERVICE,
+        port: 465,
+        secure: true,
+        auth: {
+            user: 'contacto@gruppodf.com.ar',
+            pass: process.env.MPASS
+        },
+        maxMessages: 100,
+        family: 4,
+    });
+
     for (let i = 0; i < userDB.length; i++) {
-        const transporter = nodemailer.createTransport({
-            maxConnections: 1,
-            pool: true,
-            host: process.env.MSERVICE,
-            port: 465,
-            secure: true,
-            auth: {
-                user: 'contacto@gruppodf.com.ar',
-                pass: process.env.MPASS
-            }
-        });
+        // const transporter
 
         await transporter.sendMail({
             from: '"Gruppo DF Subastas" <contacto@gruppodf.com.ar>',
@@ -539,6 +546,8 @@ const comunicar= async(req,res=response) =>{
             if (error) {
                 console.log(error);
                 return false;
+            }else{
+                console.log('mail enviado a: '+info.envelope.to[0]);
             }
         });
     }
