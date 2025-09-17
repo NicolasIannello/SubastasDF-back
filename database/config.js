@@ -89,7 +89,9 @@ const tracking = async() =>{
                         pass: process.env.MPASS
                     },
                     maxMessages: 100,
-                    family: 4,
+                    //family: 4,
+                    rateDelta: 60 * 1000, // 1 minute
+                    rateLimit: 30         // max messages per delta
                 });
                 for (let j = 0; j < userDB.length; j++) {
                     if(process.env.NOTI=='true') notificarApertura(userDB[j].mail,userDB[j].nombre,eventoDB[i].nombre,eventoDB[i].fecha_cierre,eventoDB[i].hora_cierre,eventoDB[i].uuid,transporter)
@@ -183,7 +185,9 @@ const tracking = async() =>{
                             pass: process.env.MPASS
                         },
                         maxMessages: 100,
-                        family: 4,
+                        //family: 4,
+                        rateDelta: 60 * 1000, // 1 minute
+                        rateLimit: 30         // max messages per delta
                     });
                     for (let j = 0; j < userDB.length; j++) {
                         if(userDB[j].oferta.length>0){
