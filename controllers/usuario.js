@@ -214,13 +214,10 @@ const notificar= async(mail,id,tipo)=>{
     }, function(error, info){
         if (error) {
             console.log(error);
-            return false;
         }else{
             console.log('mail enviado a: '+info.envelope.to[0]);
         }
     });
-    
-    return true;
 };
 
 const mailContacto= async(req,res=response)=>{    
