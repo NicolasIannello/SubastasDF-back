@@ -188,6 +188,9 @@ const notificar= async(mail,id,tipo)=>{
         auth: {
             user: 'contacto@gruppodf.com.ar',
             pass: process.env.MPASS
+        },
+        tls: {
+            rejectUnauthorized: false
         }
     });
     let token=await generarJWT(id,tipo)
@@ -229,6 +232,9 @@ const mailContacto= async(req,res=response)=>{
         auth: {
             user: 'contacto@gruppodf.com.ar',
             pass: process.env.MPASS
+        },
+        tls: {
+            rejectUnauthorized: false
         }
     });
 
