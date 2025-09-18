@@ -529,10 +529,13 @@ const comunicar= async(req,res=response) =>{
             user: 'contacto@gruppodf.com.ar',
             pass: process.env.MPASS
         },
+        tls: {
+            rejectUnauthorized: false
+        },
         maxMessages: 100,
         //family: 4,
         rateDelta: 60 * 1000, // 1 minute
-        rateLimit: 30         // max messages per delta
+        rateLimit: 15         // max messages per delta
     });
 
     for (let i = 0; i < userDB.length; i++) {
