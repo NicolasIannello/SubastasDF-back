@@ -26,11 +26,11 @@ const dbConnection = async() =>{
 }
 
 const tracking = async() =>{
-    const sleep = ms => new Promise(res => setTimeout(res, ms));
+    // const sleep = ms => new Promise(res => setTimeout(res, ms));
 
-    while(true) {
-        await sleep(9000);
-
+    // while(true) {
+    //     await sleep(9000);
+    //setInterval(async() => {        
         let date_time=new Date();
         let date=("0" + date_time.getDate()).slice(-2);
         let month=("0" + (date_time.getMonth() + 1)).slice(-2);
@@ -256,7 +256,9 @@ const tracking = async() =>{
                 await Evento.findByIdAndDelete(eventosViejos[i]._id);
             }
         }
-    }
+
+        setTimeout(tracking, 9000);
+    //}
 }
 
 const notificarApertura= async(mail,nombre,evento,fecha,hora,id,trans)=>{
