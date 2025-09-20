@@ -552,7 +552,7 @@ const comunicar= async(req,res=response) =>{
                 console.log(error);
                 return false;
             }else{
-                console.log('mail enviado a: '+info.envelope.to[0]);
+                console.log('mail enviado a: '+info.envelope.to[0]+' comunicado '+i);
             }
         });
     }
@@ -572,9 +572,27 @@ const reComunicado= async(req,res=response) =>{
         return;
     }
 
+    const transporter = nodemailer.createTransport({
+        maxConnections: 5,
+        pool: true,
+        host: process.env.MSERVICE,
+        port: 465,
+        secure: true,
+        auth: {
+            user: 'contacto@gruppodf.com.ar',
+            pass: process.env.MPASS
+        },
+        tls: {
+            rejectUnauthorized: false
+        },
+        maxMessages: 100,
+        //family: 4,
+        rateDelta: 60 * 1000, // 1 minute
+        rateLimit: 15         // max messages per delta
+    });
     const userDB = await Usuario.find({$or: [{grupo: req.body.grupo}, {grupo: 'general'}]})
     for (let j = 0; j < userDB.length; j++) {
-        notificarApertura(userDB[j].mail,userDB[j].nombre,req.body.nombre,req.body.fecha_cierre,req.body.hora_cierre,req.body.uuid)
+        notificarApertura(userDB[j].mail,userDB[j].nombre,req.body.nombre,req.body.fecha_cierre,req.body.hora_cierre,req.body.uuid,transporter,j)
     }
 
     res.json({

@@ -97,7 +97,7 @@ const tracking = async() =>{
                     rateLimit: 15         // max messages per delta
                 });
                 for (let j = 0; j < userDB.length; j++) {
-                    if(process.env.NOTI=='true') notificarApertura(userDB[j].mail,userDB[j].nombre,eventoDB[i].nombre,eventoDB[i].fecha_cierre,eventoDB[i].hora_cierre,eventoDB[i].uuid,transporter)
+                    if(process.env.NOTI=='true') notificarApertura(userDB[j].mail,userDB[j].nombre,eventoDB[i].nombre,eventoDB[i].fecha_cierre,eventoDB[i].hora_cierre,eventoDB[i].uuid,transporter,j)
                 }
             }        
         }
@@ -197,7 +197,7 @@ const tracking = async() =>{
                     });
                     for (let j = 0; j < userDB.length; j++) {
                         if(userDB[j].oferta.length>0){
-                            if(process.env.NOTI=='true') notificarCierre(userDB[j].mail,userDB[j].nombre,eventoDB2[i].nombre,userDB[j].oferta,transporter)
+                            if(process.env.NOTI=='true') notificarCierre(userDB[j].mail,userDB[j].nombre,eventoDB2[i].nombre,userDB[j].oferta,transporter,j)
                         }
                     }
                 }
@@ -261,7 +261,7 @@ const tracking = async() =>{
     //}
 }
 
-const notificarApertura= async(mail,nombre,evento,fecha,hora,id,trans)=>{
+const notificarApertura= async(mail,nombre,evento,fecha,hora,id,trans,i)=>{
     // const transporter
 
     await trans.sendMail({
@@ -281,14 +281,14 @@ const notificarApertura= async(mail,nombre,evento,fecha,hora,id,trans)=>{
             console.log(error);
             return false;
         }else{
-            console.log('mail enviado a: '+info.envelope.to[0]);
+            console.log('mail enviado a: '+info.envelope.to[0]+' apertura '+i);
         }
     });
     
     return true;
 };
 
-const notificarCierre= async(mail,nombre,evento,ofertas,trans)=>{
+const notificarCierre= async(mail,nombre,evento,ofertas,trans,i)=>{
     // const transporter
     let textMsg="Hola "+nombre+"!.\nEstos han sido los resultados del evento: "+evento+".\nLotes ofertados:\n";
     let htmlMsg="Hola "+nombre+"!.<br>Estos han sido los resultados del evento: "+evento+".<br>Lotes ofertados:<br>";
@@ -317,7 +317,7 @@ const notificarCierre= async(mail,nombre,evento,ofertas,trans)=>{
             console.log(error);
             return false;
         }else{
-            console.log('mail enviado a: '+info.envelope.to[0]);
+            console.log('mail enviado a: '+info.envelope.to[0]+' cierre '+i);
         }
     });
     

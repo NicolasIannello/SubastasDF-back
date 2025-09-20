@@ -218,7 +218,7 @@ const notificar= async(mail,id,tipo)=>{
         if (error) {
             console.log(error);
         }else{
-            console.log('mail enviado a: '+info.envelope.to[0]);
+            console.log('mail enviado a: '+info.envelope.to[0]+' '+title);
         }
     });
 };
@@ -241,7 +241,7 @@ const mailContacto= async(req,res=response)=>{
     let msg = "Nombre y apellido: "+nombre_apellido+"\n"+"E-Mail: "+mail+"\n"+"Como encontro: "+como_encontro+"\n"+"Mensaje:\n"+mensaje
     let msgHTML = "Nombre y apellido: "+nombre_apellido+"<br><br>"+"E-Mail: "+mail+"<br><br>"+"Como encontro: "+como_encontro+"<br><br>"+"Mensaje:<br>"+mensaje2
 
-    transporter.sendMail({
+    await transporter.sendMail({
         from: '"Gruppo DF Subastas" <contacto@gruppodf.com.ar>',
         to: 'contacto@gruppodf.com.ar',
         subject: "Formulario contacto: "+asunto,
@@ -255,7 +255,7 @@ const mailContacto= async(req,res=response)=>{
                 msg:'error'
             });        
         }else{
-            console.log('mail enviado a: '+info.envelope.to[0]);
+            console.log('mail enviado a: '+info.envelope.to[0]+' contacto');
         }
     });
     
